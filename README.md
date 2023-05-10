@@ -32,6 +32,17 @@ English and german version:
 # Installation
 please contribute ANY upgrades to the card or algorythm thia helps everybody!
 * copy weather_forecast.yaml into your custom yaml integrations folder
+how to make a integrations folder:
+1. add this to your configuration.yaml:
+
+```
+homeassistant:
+  packages: !include_dir_named integrations
+```
+  
+2. create a folder named integrations in your config directory
+3. copy weather_forecast.yaml in this folder
+
 * make changes for your individual setup (edit settings marked in weather_forecast.yaml
 * copy the card as a manual yaml config into lovelace. !mushroom required, vertical-stack-in-card required!
 * edit the current production of solar entity in the conditional cards
