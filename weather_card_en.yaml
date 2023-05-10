@@ -40,7 +40,7 @@ cards:
 
           {%if states.sensor.local_forecast.attributes.forecast_temp_short[1] ==
           1%}{{states.sensor.local_forecast.attributes.forecast_temp_short[0]}}°C{%endif%}
-        icon: '{{states.sensor.local_forecast_zambretti_detail.attributes.icons[0]}}'
+        icon: '{{states.sensor.local_forecast_zambretti_detail.attributes.icons[1]}}'
         icon_color: none
         layout: vertical
         multiline_secondary: true
