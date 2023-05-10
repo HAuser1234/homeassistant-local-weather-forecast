@@ -25,9 +25,9 @@ Following sensors can be used:
 # Card
 English and german version:
 
-![grafik](https://github.com/HAuser1234/homeassistant-local-weather-forecast/assets/122117318/660ae494-a364-4fcb-8fff-5f8b31890c21)
+![grafik](https://github.com/HAuser1234/homeassistant-local-weather-forecast/assets/122117318/3a4cb58b-617f-4a9a-8fb2-ec723a5b05c0)
+![grafik](https://github.com/HAuser1234/homeassistant-local-weather-forecast/assets/122117318/19c8220a-4bfe-4a0f-a82a-c968cbfd5b31)
 
-![grafik](https://github.com/HAuser1234/homeassistant-local-weather-forecast/assets/122117318/30a135b7-ed0a-4cd2-a9fd-9d0b75570df8)
 
 # Installation
 please contribute ANY upgrades to the card or algorythm thia helps everybody!
