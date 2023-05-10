@@ -49,6 +49,7 @@ homeassistant:
 
 # ToDo
 * improove algorythms
+* find bugs (please commit changes!)
 * make better temperature forecast
 
 # sources
