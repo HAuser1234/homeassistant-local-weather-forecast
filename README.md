@@ -22,13 +22,11 @@ Following sensors can be used:
 * Wind speed (optional)
 * Wind direction (optional)
 
-# card
+# Card
 English and german version:
 
 ![grafik](https://github.com/HAuser1234/homeassistant-local-weather-forecast/assets/122117318/660ae494-a364-4fcb-8fff-5f8b31890c21)
 ![grafik](https://github.com/HAuser1234/homeassistant-local-weather-forecast/assets/122117318/30a135b7-ed0a-4cd2-a9fd-9d0b75570df8)
-
-
 
 # Installation
 please contribute ANY upgrades to the card or algorythm thia helps everybody!
@@ -36,6 +34,10 @@ please contribute ANY upgrades to the card or algorythm thia helps everybody!
 * make changes for your individual setup (edit settings marked in weather_forecast.yaml
 * copy the card as a manual yaml config into lovelace. !mushroom required, vertical-stack-in-card required!
 * edit the current production of solar entity in the conditional cards
+
+# ToDo
+* improove algorythms
+* make better temperature forecast
 
 # sources
 https://github.com/sassoftware/iot-zambretti-weather-forcasting
