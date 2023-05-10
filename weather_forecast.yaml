@@ -1,0 +1,446 @@
+template:
+  - sensor:
+      - name: Local forecast
+        state: >
+          {# -----> Language: 0 = German ; 1 = English <----- #}
+          {%set title = ["Lokale Wettervorhersage","Local weather forecast"]%}
+          {{title[0]}}
+
+        attributes:
+          language: >
+            {# -----> Language: 0 = German ; 1 = English <----- #}
+            {% set language = 0%}{{language}}
+          temperature: >
+            {# -----> set temperature in celcius (only when pressure_sea = 0) <-----#}
+            {% set temp = states.weather.home.attributes.temperature%}
+            {{temp}}
+          p0: >
+            {# -----> pressure sensor (needed) <----- #}
+            {% set pressure = states.weather.tomorrow_io_home_daily.attributes.pressure%}
+
+            {# -----> pressure at sealevel: set to 1 else set to 0 (needed) <-----#}
+            {% set pressure_sea = 1%}
+
+            {# -----> set height above sealevel in meters (only when pressure_sea = 0) <-----#}
+            {% set height = 410%}
+
+            {# Calc pressure at sealevel -> p0 (if necessary)#}
+            {% set temp = states.sensor.local_forecast.attributes.temperature|float(0)%}
+            {% set p0 = pressure*pressure_sea-(pressure_sea-1)*pressure*(1-((0.0065*height)/(temp+(0.0065*height)+273.15)))**(-5.257)%}
+            {{p0}}
+          wind_direction: >
+            {# -----> set wind direction in degrees (optional else 0) <----- #}
+            {% set wind_dir = states.weather.home.attributes.wind_bearing|int(0)%}
+
+            {# -----> set wind speed (optional else 0) <----- #}
+            {%set wind_speed = states.weather.home.attributes.wind_speed|float(0)%}
+
+
+            {# ----------------------------------------------- Config end ----------------------------------------------- #}
+
+            {# is there even wind ? #}
+            {%if wind_speed < 3%}{#calm#}{%set wind_speed_fak = 0%}
+            {%else%}{#wind#}{%set wind_speed_fak = 1%}
+            {%endif%}
+
+            {# Calc Wind bearing to south or north#}
+            {% if wind_dir >=135 and  wind_dir <=225%}
+            {% set wind_fak = 2%}{#Wind from south#}
+            {% elif wind_dir >= 315 or wind_dir <= 45 %}
+            {% set wind_fak = 0%}{#Wind from west or east#}
+            {%else%}
+            {% set wind_fak = 1%}{% set wind_text = "N"%}
+            {%endif%}
+            {% set dir = wind_dir|float %}
+            {% if 11.25 < dir <= 33.75 %}{% set dir_text = "N"%}
+            {% elif 33.75 < dir <= 56.25 %}{% set dir_text = "NE"%}
+            {% elif 56.25 < dir <= 78.75 %}{% set dir_text = "ENE"%} 
+            {% elif 78.75 < dir <= 101.25 %}{% set dir_text = "E"%} 
+            {% elif 101.25 < dir <= 123.75 %}{% set dir_text = "ESE"%}  
+            {% elif 123.75 < dir <= 146.25 %}{% set dir_text = "SE"%}  
+            {% elif 146.25 < dir <= 168.75 %}{% set dir_text = "SSE"%}  
+            {% elif 168.75 < dir <= 191.25 %}{% set dir_text = "S"%}  
+            {% elif 191.25 < dir <= 213.75 %}{% set dir_text = "SSW"%}  
+            {% elif 213.75 < dir <= 236.25 %}{% set dir_text = "SW"%}  
+            {% elif 236.25 < dir <= 258.75 %}{% set dir_text = "WSW"%}  
+            {% elif 258.75 < dir <= 281.25 %}{% set dir_text = "W"%}  
+            {% elif 281.25 < dir <= 303.75 %}{% set dir_text = "WNW"%}  
+            {% elif 303.75 < dir <= 326.25 %}{% set dir_text = "NW"%}  
+            {% elif 326.25 < dir <= 348.75 %}{% set dir_text = "NNW"%}  
+            {% else %}{% set dir_text = "N"%}  
+            {% endif %}
+            {{[wind_fak,wind_dir,dir_text,wind_speed_fak]}}
+          forecast_short_term: >
+            {# Calc current condtions#}
+            {%set language = states.sensor.local_forecast.attributes.language|int(0)%}
+            {%set conditions = [('stürmisch','stormy'),('regnerisch','rainy'),('wechselhaft','mixed'),('sonnig','sunny'),('sehr trocken','extra dry')]%}
+            {%set pressure_system = [('Tiefdruckgebiet','low pressure system'),('Normal','normal'),('Hochdruckgebiet','high pressure system')]%}
+            {%set p0 = states.sensor.local_forecast.attributes.p0|float(0)%}
+            {% if p0<980 %}
+            {% set current_condtion = [conditions[0][language],pressure_system[0][language]]%}
+            {% elif p0>=980 and p0<1000 %}
+            {% set current_condtion = [conditions[1][language],pressure_system[0][language]]%}
+            {% elif p0>=1000 and p0<1020 %}
+            {% set current_condtion = [conditions[2][language],pressure_system[1][language]]%}
+            {% elif p0>=120 and p0<1040 %}
+            {% set current_condtion = [conditions[3][language],pressure_system[2][language]]%}
+            {% elif p0>=1040 %}
+            {% set current_condtion = [conditions[4][language],pressure_system[2][language]]%}
+            {%endif%}
+            {{current_condtion}}
+          forecast_zambretti: >
+            {#get specific forecast num based on pressure trend#}
+            {%set p0 = states.sensor.local_forecast.attributes.p0|float(0)%}
+            {%set p0change = states.sensor.local_forecast_pressurechange.state |float(0)%}
+            {%set windfak = states.sensor.local_forecast.attributes.wind_direction[0]|int(0)%}
+            {%set windfak_speed = states.sensor.local_forecast.attributes.wind_direction[3]|int(0)%}
+            {%if p0change<(-1.6) %}{%set trend = '-1'%}{%elif p0change>(1.6) %}{%set trend = '1'%}{%else%}{%set trend = '0'%}{%endif%}
+            {# Calc forecast#}
+            {%if trend == '-1' %} {# falling pressure#}
+            {%set z = (127-0.12*p0)|round(0)|int(0)%}
+            {%elif trend == '0'%} {# steady pressure#}
+            {%set z = (144-0.13*p0)|round(0)|int(0)%}
+            {#winter and summer adjustment#}
+            {%if 2 < now().month < 11%}
+            {%set z = z%}{#summer#}{%else%}
+            {%set z = z-1%} {#winter#}{%endif%}
+            {%elif trend == '1'%} {# rising pressure#}
+            {%set z = (185-0.16*p0)|round(0)|int(0)%}
+            {%if 2 < now().month < 11%}
+            {%set z = z+1%}{#summer#}{%else%}
+            {%set z = z%} {#winter#}{%endif%}
+            {%endif%}
+            {# wind factor #}
+            {%set z = (z + windfak*windfak_speed) %} 
+            {# generate report #}
+            {%set language = states.sensor.local_forecast.attributes.language|int(0)%}
+            {%set t_lang = [('Beständiges Schönwetter!','Settled Fine'),('Schönes Wetter!','fine'),('Es wird schöner.','Becoming Fine'),('Schön, wird wechselhaft.','Fine Becoming Less Settled'),('Schön, Regenschauer möglich.','Fine, Possibly showers'),('Heiter bis wolkig, Besserung zu erwarten.','Fairly Fine, Improving'),('Heiter bis wolkig, anfangs evtl. Schauer.','Fairly Fine, Possibly showers, early'),('Heiter bis wolkig, später Regen.','Fairly Fine Showery Later'),('Anfangs noch Schauer, dann Besserung.','Showery Early, Improving'),('Wechselhaft mit Schauern','Changeable Mending'),('Heiter bis wolkig, vereinzelt Regen.','Fairly Fine , Showers likely'),('Unbeständig, später Aufklarung.','Rather Unsettled Clearing Later'),('Unbeständig, evtl. Besserung.','Unsettled, Probably Improving'),('Regnerisch mit heiteren Phasen.','Showery Bright Intervals'),('Regnerisch, wird unbeständiger.','Showery Becoming more unsettled'),('Wechselhaft mit etwas Regen.','Changeable some rain'),('Unbeständig mit heiteren Phasen.','Unsettled, short fine Intervals'),('Unbeständig, später Regen.','Unsettled, Rain later'),('Unbeständig mit etwas Regen.','Unsettled, rain at times'),('Wechselhaft und regnerisch','Very Unsettled, Finer at times'),('Gelegentlich Regen, Verschlechterung.','Rain at times, worse later'),('Zuweilen Regen, sehr unbeständig.','Rain at times, becoming very unsettled'),('Häufiger Regen.','Rain at Frequent Intervals'),('Regen, sehr unbeständig.','Very Unsettled, Rain'),('Stürmisch, evtl. Besserung.','Stormy, possibly improving'),('Stürmisch mit viel Regen.','Stormy, much rain')]%}
+            {%if z==0 %}{%set type = "none"%}
+            {%elif z in [1,10,20] %}{%set type = 0%}
+            {%elif z in [2,11,21] %}{%set type = 1%}
+            {%elif z in [11] %}{%set type = 2%}
+            {%elif z in [3] %}{%set type = 3%}
+            {%elif z in [12] %}{%set type = 4%}
+            {%elif z in [23] %}{%set type = 5%}
+            {%elif z in [24] %}{%set type = 6%}
+            {%elif z in [4] %}{%set type = 7%}
+            {%elif z in [25] %}{%set type = 8%}
+            {%elif z in [26] %}{%set type = 9%}
+            {%elif z in [13] %}{%set type = 10%}
+            {%elif z in [27] %}{%set type = 11%}
+            {%elif z in [28] %}{%set type = 12%}
+            {%elif z in [14] %}{%set type = 13%}
+            {%elif z in [5] %}{%set type = 14%}
+            {%elif z in [15] %}{%set type = 15%}
+            {%elif z in [29] %}{%set type = 16%}
+            {%elif z in [6] %}{%set type = 17%}
+            {%elif z in [16] %}{%set type = 18%}
+            {%elif z in [30] %}{%set type = 19%}
+            {%elif z in [7] %}{%set type = 20%}
+            {%elif z in [8] %}{%set type = 21%}
+            {%elif z in [17] %}{%set type = 22%}
+            {%elif z in [9,18] %}{%set type = 23%}
+            {%elif z in [31] %}{%set type = 24%}
+            {%elif z in [19,32] %}{%set type = 25%}
+            {%endif%}
+            {%if z==0 %}{%set type_l = "none"%}
+            {%elif z in [1,10,20] %}{%set type_l = "A"%}
+            {%elif z in [2,11,21] %}{%set type_l = "B"%}
+            {%elif z in [11] %}{%set type_l = "C"%}
+            {%elif z in [3] %}{%set type_l = "D"%}
+            {%elif z in [12] %}{%set type_l = "E"%}
+            {%elif z in [23] %}{%set type_l = "F"%}
+            {%elif z in [24] %}{%set type_l = "G"%}
+            {%elif z in [4] %}{%set type_l = "H"%}
+            {%elif z in [25] %}{%set type_l = "I"%}
+            {%elif z in [26] %}{%set type_l = "J"%}
+            {%elif z in [13] %}{%set type_l = "K"%}
+            {%elif z in [27] %}{%set type_l = "L"%}
+            {%elif z in [28] %}{%set type_l = "M"%}
+            {%elif z in [14] %}{%set type_l = "N"%}
+            {%elif z in [5] %}{%set type_l = "O"%}
+            {%elif z in [15] %}{%set type_l = "P"%}
+            {%elif z in [29] %}{%set type_l = "Q"%}
+            {%elif z in [6] %}{%set type_l = "R"%}
+            {%elif z in [16] %}{%set type_l = "S"%}
+            {%elif z in [30] %}{%set type_l = "T"%}
+            {%elif z in [7] %}{%set type_l = "U"%}
+            {%elif z in [8] %}{%set type_l = "V"%}
+            {%elif z in [17] %}{%set type_l = "W"%}
+            {%elif z in [9,18] %}{%set type_l = "X"%}
+            {%elif z in [31] %}{%set type_l = "Y"%}
+            {%elif z in [19,32] %}{%set type_l = "Z"%}
+            {%endif%}
+            {{[t_lang[type|int(9)][language],type,type_l]}}{#text,0-25 the higher the worse#}
+
+          forecast_neg_zam: >
+            {##}
+            {# Negretti and Zambras 'slide rule' algorythm #}
+            {##}
+            {# local vars #}
+            {%set hem = 1%} {#Northern = 1 Southern = 0#}
+            {%set bar_top = 1050%}
+            {%set bar_bottom = 950%}
+            {%set rise_opt = [25,25,25,24,24,19,16,12,11,9,8,6,5,2,1,1,0,0,0,0,0,0]%}
+            {%set steady_opt = [25,25,25,25,25,25,23,23,22,18,15,13,10,4,1,1,0,0,0,0,0,0]%}
+            {%set fall_opt = [25,25,25,25,25,25,25,25,23,23,21,20,17,14,7,3,1,1,1,0,0,0]%}
+            {%set p0 = states.sensor.local_forecast.attributes.p0|float(0)%}
+            {%set p0change = states.sensor.local_forecast_pressurechange.state |float(0)%}
+            {%set dir = states.sensor.local_forecast.attributes.wind_direction[1]|int(0) %}
+            {%set windfak_speed = states.sensor.local_forecast.attributes.wind_direction[3]|int(0)%}
+            {%set t_lang = [('Beständiges Schönwetter!','Settled Fine'),('Schönes Wetter!','fine'),('Es wird schöner.','Becoming Fine'),('Schön, wird wechselhaft.','Fine Becoming Less Settled'),('Schön, Regenschauer möglich.','Fine, Possibly showers'),('Heiter bis wolkig, Besserung zu erwarten.','Fairly Fine, Improving'),('Heiter bis wolkig, anfangs evtl. Schauer.','Fairly Fine, Possibly showers, early'),('Heiter bis wolkig, später Regen.','Fairly Fine Showery Later'),('Anfangs noch Schauer, dann Besserung.','Showery Early, Improving'),('Wechselhaft mit Schauern','Changeable Mending'),('Heiter bis wolkig, vereinzelt Regen.','Fairly Fine , Showers likely'),('Unbeständig, später Aufklarung.','Rather Unsettled Clearing Later'),('Unbeständig, evtl. Besserung.','Unsettled, Probably Improving'),('Regnerisch mit heiteren Phasen.','Showery Bright Intervals'),('Regnerisch, wird unbeständiger.','Showery Becoming more unsettled'),('Wechselhaft mit etwas Regen.','Changeable some rain'),('Unbeständig mit heiteren Phasen.','Unsettled, short fine Intervals'),('Unbeständig, später Regen.','Unsettled, Rain later'),('Unbeständig mit etwas Regen.','Unsettled, rain at times'),('Wechselhaft und regnerisch','Very Unsettled, Finer at times'),('Gelegentlich Regen, Verschlechterung.','Rain at times, worse later'),('Zuweilen Regen, sehr unbeständig.','Rain at times, becoming very unsettled'),('Häufiger Regen.','Rain at Frequent Intervals'),('Regen, sehr unbeständig.','Very Unsettled, Rain'),('Stürmisch, evtl. Besserung.','Stormy, possibly improving'),('Stürmisch mit viel Regen.','Stormy, much rain')]%}
+            {%set t_lang_exceptional = ['außergewöhnliches Wetter, ','Exceptional Weather, ']%}
+            {%set language = states.sensor.local_forecast.attributes.language|int(0)%}
+            {##}
+            {# calculations #}
+            {##}
+            {%set bar_range = bar_top-bar_bottom%}
+            {%set constant = (bar_range/22)|round(3)%} {# calc range of pressure to options#}
+            {%if 2 < now().month < 11%}{%set season = 1%}{#summer#}{%else%}{%set season = 0%}{#winter#}{%endif%}
+            {%if p0change<(-1.6) %}{%set trend = '-1'%}{%elif p0change>(1.6) %}{%set trend = '1'%}{%else%}{%set trend = '0'%}{%endif%}
+            {#northern hemisphere#}
+            {%set z_hp = p0%}
+            {%if hem == 1 %}
+              {% if 11.25 < dir <= 33.75 and windfak_speed|int == 1%}{%set z_hp = z_hp+5/100*bar_range%} {# NNE #}
+              {% elif 33.75 < dir <= 56.25 and windfak_speed|int == 1%}{%set z_hp = z_hp+4+6/100*bar_range%} {# NE #}
+              {% elif 56.25 < dir <= 78.75 and windfak_speed|int == 1%}{%set z_hp = z_hp+2/100*bar_range%} {# ENE #} 
+              {% elif 78.75 < dir <= 101.25 and windfak_speed|int == 1%}{%set z_hp = z_hp-0.5/100*bar_range%} {# E #}
+              {% elif 101.25 < dir <= 123.75 and windfak_speed|int == 1%}{%set z_hp = z_hp-3-2/100*bar_range%} {# ESE #}
+              {% elif 123.75 < dir <= 146.25 and windfak_speed|int == 1%}{%set z_hp = z_hp-5/100*bar_range%} {# SE #}
+              {% elif 146.25 < dir <= 168.75 and windfak_speed|int == 1%}{%set z_hp = z_hp-8.5/100*bar_range%} {# SSE #}
+              {% elif 168.75 < dir <= 191.25 and windfak_speed|int == 1%}{%set z_hp = z_hp-11-12/100*bar_range%} {# S #}
+              {% elif 191.25 < dir <= 213.75 and windfak_speed|int == 1%}{%set z_hp = z_hp-10/100*bar_range%} {# SSW #}
+              {% elif 213.75 < dir <= 236.25 and windfak_speed|int == 1%}{%set z_hp = z_hp-6/100*bar_range%} {# SW #}
+              {% elif 236.25 < dir <= 258.75 and windfak_speed|int == 1%}{%set z_hp = z_hp-4.5/100*bar_range%} {# WSW #}
+              {% elif 258.75 < dir <= 281.25 and windfak_speed|int == 1%}{%set z_hp = z_hp-3/100*bar_range%} {# W #}
+              {% elif 281.25 < dir <= 303.75 and windfak_speed|int == 1%}{%set z_hp = z_hp-0.5/100*bar_range%} {# WNW #}
+              {% elif 303.75 < dir <= 326.25 and windfak_speed|int == 1%}{%set z_hp = z_hp+1.5/100*bar_range%} {# NW #}
+              {% elif 326.25 < dir <= 348.75 and windfak_speed|int == 1%}{%set z_hp = z_hp+3/100*bar_range%} {# NNW #}
+              {% elif dir > 348.75 and windfak_speed|int == 1%}{%set z_hp = z_hp+6/100*bar_range%} {# N #}
+              {%endif%}
+              {%if season|int == 1%}
+                {%if trend|int == 1%}{%set z_hp = z_hp+7/100*bar_range%}
+                {%elif trend|int == -1%}{%set z_hp = z_hp-7/100*bar_range%}
+                {%endif%}
+              {%endif%}
+              {# for southern hemisphere all directions inverted #}
+            {%endif%}
+            {%if z_hp|float == bar_top|float%}
+              {%set z_hp = bar_top-1 %}
+            {%endif%}
+
+            {# calculate options for weather #}
+            {%set z_option = ((z_hp-bar_bottom)/constant)|round(0,'floor')%}
+            {%set z_out = ""%}
+
+            {%if z_option < 0%}
+              {%set z_option = 0%}
+              {%set z_out = t_lang_exceptional[language]%}
+            {%elif z_option > 21%}
+              {%set z_option = 21%}
+              {%set z_out = t_lang_exceptional[language]%}
+            {%endif%}
+
+            {# look at pressure and generate results #}
+            {%if trend|int == 1%}{#rising pressure#}
+              {%set z_out = z_out + t_lang[rise_opt[z_option]][language]%}
+              {%set z_num = rise_opt[z_option]%}
+            {%elif trend|int == -1%}{#rising pressure#}
+              {%set z_out = z_out + t_lang[fall_opt[z_option]][language]%}
+              {%set z_num = fall_opt[z_option]%}
+            {%else%}
+              {%set z_out = z_out + t_lang[steady_opt[z_option]][language]%}
+              {%set z_num = steady_opt[z_option]%}
+            {%endif%}
+            {%set z = z_num%}
+            {%if z==0 %}{%set type_l = "none"%}
+            {%elif z in [1,10,20] %}{%set type_l = "A"%}
+            {%elif z in [2,11,21] %}{%set type_l = "B"%}
+            {%elif z in [11] %}{%set type_l = "C"%}
+            {%elif z in [3] %}{%set type_l = "D"%}
+            {%elif z in [12] %}{%set type_l = "E"%}
+            {%elif z in [23] %}{%set type_l = "F"%}
+            {%elif z in [24] %}{%set type_l = "G"%}
+            {%elif z in [4] %}{%set type_l = "H"%}
+            {%elif z in [25] %}{%set type_l = "I"%}
+            {%elif z in [26] %}{%set type_l = "J"%}
+            {%elif z in [13] %}{%set type_l = "K"%}
+            {%elif z in [27] %}{%set type_l = "L"%}
+            {%elif z in [28] %}{%set type_l = "M"%}
+            {%elif z in [14] %}{%set type_l = "N"%}
+            {%elif z in [5] %}{%set type_l = "O"%}
+            {%elif z in [15] %}{%set type_l = "P"%}
+            {%elif z in [29] %}{%set type_l = "Q"%}
+            {%elif z in [6] %}{%set type_l = "R"%}
+            {%elif z in [16] %}{%set type_l = "S"%}
+            {%elif z in [30] %}{%set type_l = "T"%}
+            {%elif z in [7] %}{%set type_l = "U"%}
+            {%elif z in [8] %}{%set type_l = "V"%}
+            {%elif z in [17] %}{%set type_l = "W"%}
+            {%elif z in [9,18] %}{%set type_l = "X"%}
+            {%elif z in [31] %}{%set type_l = "Y"%}
+            {%elif z in [19,32] %}{%set type_l = "Z"%}
+            {%endif%}
+            {{z_out,z_num,type_l}}
+
+          forecast_pressure_trend: >
+            {%set p0change = states.sensor.local_forecast_pressurechange.state |float(0)%}
+            {%set language = states.sensor.local_forecast.attributes.language|int(0)%}
+            {%set p0 = states.sensor.local_forecast.attributes.p0|float(0)%}
+            {%set trend_lang=[('fallend','falling'),('steigend','rising'),('stabil','steady')]%}
+            {%if p0change<(-1.6) %}{%set trend = '0'%}{%elif p0change>(1.6) %}{%set trend = '1'%}{%else%}{%set trend = '2'%}{%endif%}
+            {{[trend_lang[trend|int][language],trend]}}
+
+          forecast_temp_short: >
+            {#ultra short term temperature prognosis#}
+            {% set temp = states.sensor.local_forecast.attributes.temperature|float(0)%}
+            {%set temp_change = states.sensor.local_forecast_temperaturechange.state|float(0)%}
+            {%set first_time = states.sensor.local_forecast_zambretti_detail.attributes.first_time[1]|float(0)%}
+            {%set second_time = states.sensor.local_forecast_zambretti_detail.attributes.second_time[1]|float(0)%}
+            {%if first_time>0%}{%set t_forecast = ((temp_change/60*first_time)+temp)|round(1)%}{%set intervall = 0%}
+            {%elif second_time>0%}{%set t_forecast = ((temp_change/60*second_time)+temp)|round(1)%}{%set intervall = 1%}
+            {%else%}{%set t_forecast = "unavailable"%}{%set intervall = -1%}{%endif%}
+            {{[t_forecast,intervall]}}
+
+  - sensor:
+      - name: Local forecast zambretti detail
+        state: >
+          {{"more details on zambretti forecast"}}
+        attributes:
+          forecast: >
+            {% set z = states.sensor.local_forecast.attributes.forecast_zambretti[1]|int(0)+1%}
+            {# translate zambretti number to forecast icons: [next 6 h, next 12 h]#}
+            {# [State][day/night], available states: sunny (0), partlycloudy(1), partlycloudyrain(2), cloudy(3), rainy(4), pouring(5), lightning-rainy(6) #}
+            {%if z == 1%}{%set forecast = [0,0]%}
+            {%elif z == 2%}{%set forecast = [1,1]%}
+            {%elif z == 3%}{%set forecast = [2,1]%}
+            {%elif z == 4%}{%set forecast = [1,2]%}
+            {%elif z == 5%}{%set forecast = [2,2]%}
+            {%elif z == 6%}{%set forecast = [2,1]%}
+            {%elif z == 7%}{%set forecast = [2,1]%}
+            {%elif z == 8%}{%set forecast = [1,4]%}
+            {%elif z == 9%}{%set forecast = [4,2]%}
+            {%elif z == 10%}{%set forecast = [4,4]%}
+            {%elif z == 11%}{%set forecast = [2,2]%}
+            {%elif z == 12%}{%set forecast = [3,1]%}
+            {%elif z == 13%}{%set forecast = [3,3]%}
+            {%elif z == 14%}{%set forecast = [2,2]%}
+            {%elif z == 15%}{%set forecast = [4,5]%}
+            {%elif z == 16%}{%set forecast = [4,4]%}
+            {%elif z == 17%}{%set forecast = [2,2]%}
+            {%elif z == 18%}{%set forecast = [1,4]%}
+            {%elif z == 19%}{%set forecast = [2,2]%}
+            {%elif z == 20%}{%set forecast = [5,5]%}
+            {%elif z == 21%}{%set forecast = [2,4]%}
+            {%elif z == 22%}{%set forecast = [4,4]%}
+            {%elif z == 23%}{%set forecast = [4,4]%}
+            {%elif z == 24%}{%set forecast = [6,4]%}
+            {%elif z == 25%}{%set forecast = [6,6]%}
+            {%endif%}
+            {{forecast}}
+          rain_prob: >
+            {# give approx. values for rain probability #}
+            {%set forecast = states.sensor.local_forecast_zambretti_detail.attributes.forecast%}
+            {%if forecast[0]<2 and forecast[1]<2 %}{%set rain_prob = [0,0]%}
+            {%elif forecast[0]==1 and forecast[1]>=2 %}{%set rain_prob = [20,60]%}
+            {%elif forecast[0]==2 and forecast[1]==2 %}{%set rain_prob = [50,50]%}
+            {%elif forecast[0]==2 and forecast[1]>2 %}{%set rain_prob = [50,70]%}
+            {%else%}{%set rain_prob = [90,90]%}{%endif%}
+            {{rain_prob}}
+
+          icons: >
+            {%set forecast = states.sensor.local_forecast_zambretti_detail.attributes.forecast%}
+            {%set conditions = [('mdi:weather-sunny','mdi:weather-night'),('mdi:weather-partly-cloudy', 'mdi:weather-night-partly-cloudy'),('mdi:weather-partly-rainy','mdi:weather-partly-rainy'),('mdi:weather-cloudy','mdi:weather-cloudy'),('mdi:weather-rainy','mdi:weather-rainy'),('mdi:weather-pouring','mdi:weather-pouring'),('mdi:weather-lightning-rainy','mdi:weather-lightning-rainy')]%}
+            {# [State][day/night], available states: sunny (0), partlycloudy(1), partlycloudyrain(2), cloudy(3), rainy(4), pouring(5), lightning-rainy(6) #}
+            {%if is_state('sun.sun', 'below_horizon')==true%}{%set daynight=1%}{%else%}{%set daynight=0%}{%endif%}
+            {%set now = conditions[forecast[0]|int(0)][daynight|int(0)]%}
+            {%set later = conditions[forecast[1]|int(0)][daynight|int(0)]%}
+            {{(now,later)}}
+          first_time: >
+            {%set time_offset_first = 3%}{#time from last forecast update to the first forecast state #}
+            {%set time_to = time_offset_first*60-(as_timestamp(now()) - as_timestamp(states.sensor.local_forecast_zambretti_detail.last_changed))/60%}
+            {{[(as_timestamp(now())+time_to*60)| timestamp_custom('%H:%M'), time_to|round(2)]}}{# [time of first state, minutes to first state] #}
+          second_time: >
+            {%set time_offset_second = 9%}{#time from last forecast update to the first forecast state #}
+            {%set time_to = time_offset_second*60-(as_timestamp(now()) - as_timestamp(states.sensor.local_forecast_zambretti_detail.last_changed))/60%}
+            {{[(as_timestamp(now())+time_to*60)| timestamp_custom('%H:%M'), time_to|round(2)]}}{# [time of first state, minutes to first state] #}
+
+      - name: Local forecast neg_zam detail
+        state: >
+          {{"more details on neg_zam forecast"}}
+        attributes:
+          forecast: >
+            {% set z = states.sensor.local_forecast.attributes.forecast_neg_zam[1]|int(0)+1%}
+            {# translate zambretti number to forecast icons: [next 6 h, next 12 h]#}
+            {%if z == 1%}{%set forecast = [0,0]%}
+            {%elif z == 2%}{%set forecast = [1,1]%}
+            {%elif z == 3%}{%set forecast = [2,1]%}
+            {%elif z == 4%}{%set forecast = [1,2]%}
+            {%elif z == 5%}{%set forecast = [2,2]%}
+            {%elif z == 6%}{%set forecast = [2,1]%}
+            {%elif z == 7%}{%set forecast = [2,1]%}
+            {%elif z == 8%}{%set forecast = [1,4]%}
+            {%elif z == 9%}{%set forecast = [4,2]%}
+            {%elif z == 10%}{%set forecast = [4,4]%}
+            {%elif z == 11%}{%set forecast = [2,2]%}
+            {%elif z == 12%}{%set forecast = [3,1]%}
+            {%elif z == 13%}{%set forecast = [3,3]%}
+            {%elif z == 14%}{%set forecast = [2,2]%}
+            {%elif z == 15%}{%set forecast = [4,5]%}
+            {%elif z == 16%}{%set forecast = [4,4]%}
+            {%elif z == 17%}{%set forecast = [2,2]%}
+            {%elif z == 18%}{%set forecast = [1,4]%}
+            {%elif z == 19%}{%set forecast = [2,2]%}
+            {%elif z == 20%}{%set forecast = [5,5]%}
+            {%elif z == 21%}{%set forecast = [2,4]%}
+            {%elif z == 22%}{%set forecast = [4,4]%}
+            {%elif z == 23%}{%set forecast = [4,4]%}
+            {%elif z == 24%}{%set forecast = [6,4]%}
+            {%elif z == 25%}{%set forecast = [6,6]%}
+            {%endif%}
+            {{forecast}}
+          rain_prob: >
+            {# give approx. values for rain probability #}
+            {%set forecast = states.sensor.local_forecast_neg_zam_detail.attributes.forecast%}
+            {%if forecast[0]<2 and forecast[1]<2 %}{%set rain_prob = [0,0]%}
+            {%elif forecast[0]==1 and forecast[1]>=2 %}{%set rain_prob = [20,60]%}
+            {%elif forecast[0]==2 and forecast[1]==2 %}{%set rain_prob = [50,50]%}
+            {%elif forecast[0]==2 and forecast[1]>2 %}{%set rain_prob = [50,70]%}
+            {%else%}{%set rain_prob = [90,90]%}{%endif%}
+            {{rain_prob}}
+          icons: >
+            {%set forecast = states.sensor.local_forecast_neg_zam_detail.attributes.forecast%}
+            {%set conditions = [('mdi:weather-sunny','mdi:weather-night'),('mdi:weather-partly-cloudy', 'mdi:weather-night-partly-cloudy'),('mdi:weather-partly-rainy','mdi:weather-partly-rainy'),('mdi:weather-cloudy','mdi:weather-cloudy'),('mdi:weather-rainy','mdi:weather-rainy'),('mdi:weather-pouring','mdi:weather-pouring'),('mdi:weather-lightning-rainy','mdi:weather-lightning-rainy')]%}
+            {# [State][day/night], available states: sunny (0), partlycloudy(1), partlycloudyrain(2), cloudy(3), rainy(4), pouring(5), lightning-rainy(6) #}
+            {%if is_state('sun.sun', 'below_horizon')==true%}{%set daynight=1%}{%else%}{%set daynight=0%}{%endif%}
+            {%set now = conditions[forecast[0]|int(0)][daynight|int(0)]%}
+            {%set later = conditions[forecast[1]|int(0)][daynight|int(0)]%}
+            {{(now,later)}}
+          first_time: >
+            {%set time_offset_first = 3%}{#time from last forecast update to the first forecast state #}
+            {%set time_to = time_offset_first*60-(as_timestamp(now()) - as_timestamp(states.local_forecast_neg_zam_detail.last_changed))/60%}
+            {{[(as_timestamp(now())+time_to*60)| timestamp_custom('%H:%M'), time_to|round(2)]}}{# [time of first state, minutes to first state] #}
+          second_time: >
+            {%set time_offset_second = 9%}{#time from last forecast update to the first forecast state #}
+            {%set time_to = time_offset_second*60-(as_timestamp(now()) - as_timestamp(states.sensor.local_forecast_neg_zam_detail.last_changed))/60%}
+            {{[(as_timestamp(now())+time_to*60)| timestamp_custom('%H:%M'), time_to|round(2)]}}{# [time of first state, minutes to first state] #}
+
+  - sensor:
+      - name: Local forecast Pressure
+        state: "{{ states.sensor.local_forecast.attributes.p0|float(0) }}"
+      - name: tmp temperature
+        state: "{{ states.weather.home.attributes.temperature|float(0) }}"
+
+sensor:
+  - platform: statistics
+    name: Local forecast PressureChange
+    entity_id: sensor.local_forecast_pressure
+    state_characteristic: change
+    max_age:
+      minutes: 180
+  - platform: statistics
+    name: Local forecast TemperatureChange
+    entity_id: sensor.tmp_temperature
+    state_characteristic: change
+    max_age:
+      minutes: 60
