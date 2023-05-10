@@ -51,6 +51,7 @@ homeassistant:
 * improove algorythms
 * find bugs (please commit changes!)
 * make better temperature forecast
+* integrate maybe with a solar/battery-charge prediction tool: https://github.com/HAuser1234/Homeassistant-solar-forecast-charge-prediction
 
 # sources
 https://github.com/sassoftware/iot-zambretti-weather-forcasting
