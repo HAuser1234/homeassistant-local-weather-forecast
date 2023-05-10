@@ -7,12 +7,20 @@ Also only a barometer as a sensor is required (can also be pulled from online). 
 
 # Features
 * 2 Forcaster Models (zambretti + Negretti and Zambra)
+  (you may have to change the card to use the other model, depending on which model is more accurate at your location)
 * rain probability
 * approximate timestamps for weather change (at reboot it can take some time for them to be accurate!)
 * text prognosis
 * simple temperature forecast
 * extract general weather conditions
 * full english an german support
+
+# Sensors
+Following sensors can be used:
+* barometer (required)
+* temperature (set value to 0 is missing) (optional)
+* Wind speed (optional)
+* Wind direction (optional)
 
 # card
 English and german version:
@@ -35,7 +43,7 @@ https://integritext.net/DrKFS/zambretti.htm
 https://www.mikrocontroller.net/topic/385242
 http://www.beteljuice.co.uk/zambretti/forecast.html
 
-* according to https://github.com/sassoftware/iot-zambretti-weather-forcasting
+.* 94% according to https://github.com/sassoftware/iot-zambretti-weather-forcasting
 _
 
 THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
