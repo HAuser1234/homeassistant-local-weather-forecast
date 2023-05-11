@@ -361,7 +361,7 @@ template:
           first_time: >
             {# figure out if forecast is olf if yes add 6h -> next intervall #}
             {%set halftime = 6*60-(as_timestamp(now()) - as_timestamp(states.sensor.local_forecast_zambretti_detail.last_changed))/60%}
-            {%if halftime<0%}{%set correction = 6+((halftime/60)|float(0))%}{%else%}{%set correction = 0%}{%endif%}
+            {%if halftime<0%}{%set correction = 6-((halftime/60)|float(0))%}{%else%}{%set correction = 0%}{%endif%}
 
             {%set time_offset_first = 3+correction%}{#time from last forecast update to the first forecast state #}
             {%set time_to = time_offset_first*60-(as_timestamp(now()) - as_timestamp(states.sensor.local_forecast_zambretti_detail.last_changed))/60%}
@@ -369,7 +369,7 @@ template:
           second_time: >
             {# figure out if forecast is olf if yes add 6h -> next intervall #}
             {%set halftime = 6*60-(as_timestamp(now()) - as_timestamp(states.sensor.local_forecast_zambretti_detail.last_changed))/60%}
-            {%if halftime<0%}{%set correction = 6+((halftime/60)|float(0))%}{%else%}{%set correction = 0%}{%endif%}
+            {%if halftime<0%}{%set correction = 6-((halftime/60)|float(0))%}{%else%}{%set correction = 0%}{%endif%}
 
             {%set time_offset_second = 9+correction%}{#time from last forecast update to the first forecast state #}
             {%set time_to = time_offset_second*60-(as_timestamp(now()) - as_timestamp(states.sensor.local_forecast_zambretti_detail.last_changed))/60%}
@@ -429,7 +429,7 @@ template:
           first_time: >
             {# figure out if forecast is olf if yes add 6h -> next intervall #}
             {%set halftime = 6*60-(as_timestamp(now()) - as_timestamp(states.sensor.local_forecast_neg_zam_detail.last_changed))/60%}
-            {%if halftime<0%}{%set correction = 6+((halftime/60)|float(0))%}{%else%}{%set correction = 0%}{%endif%}
+            {%if halftime<0%}{%set correction = 6-((halftime/60)|float(0))%}{%else%}{%set correction = 0%}{%endif%}
 
             {%set time_offset_first = 3+correction%}{#time from last forecast update to the first forecast state #}
             {%set time_to = time_offset_first*60-(as_timestamp(now()) - as_timestamp(states.local_forecast_neg_zam_detail.last_changed))/60%}
@@ -437,7 +437,7 @@ template:
           second_time: >
             {# figure out if forecast is olf if yes add 6h -> next intervall #}
             {%set halftime = 6*60-(as_timestamp(now()) - as_timestamp(states.sensor.local_forecast_neg_zam_detail.last_changed))/60%}
-            {%if halftime<0%}{%set correction = 6+((halftime/60)|float(0))%}{%else%}{%set correction = 0%}{%endif%}
+            {%if halftime<0%}{%set correction = 6-((halftime/60)|float(0))%}{%else%}{%set correction = 0%}{%endif%}
 
             {%set time_offset_second = 9+correction%}{#time from last forecast update to the first forecast state #}
             {%set time_to = time_offset_second*60-(as_timestamp(now()) - as_timestamp(states.sensor.local_forecast_neg_zam_detail.last_changed))/60%}
