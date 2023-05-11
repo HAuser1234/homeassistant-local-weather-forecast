@@ -306,7 +306,7 @@ template:
   - sensor:
       - name: Local forecast zambretti detail
         state: >
-          {{"more details on zambretti forecast"}}
+          {{"more details on zambretti forecast",states.sensor.local_forecast.attributes.forecast_zambretti[1]|int(0)+1}}
         attributes:
           forecast: >
             {% set z = states.sensor.local_forecast.attributes.forecast_zambretti[1]|int(0)+1%}
@@ -360,24 +360,24 @@ template:
             {{(now,later)}}
           first_time: >
             {# figure out if forecast is olf if yes add 6h -> next intervall #}
-            {%set halftime = 6*60-(as_timestamp(now()) - as_timestamp(states.sensor.local_forecast_zambretti_detail.last_updated))/60%}
+            {%set halftime = 6*60-(as_timestamp(now()) - as_timestamp(states.sensor.local_forecast_zambretti_detail.last_changed))/60%}
             {%if halftime<0%}{%set correction = 6+((halftime/60)|float(0))%}{%else%}{%set correction = 0%}{%endif%}
 
             {%set time_offset_first = 3+correction%}{#time from last forecast update to the first forecast state #}
-            {%set time_to = time_offset_first*60-(as_timestamp(now()) - as_timestamp(states.sensor.local_forecast_zambretti_detail.last_updated))/60%}
+            {%set time_to = time_offset_first*60-(as_timestamp(now()) - as_timestamp(states.sensor.local_forecast_zambretti_detail.last_changed))/60%}
             {{[(as_timestamp(now())+time_to*60)| timestamp_custom('%H:%M'), time_to|round(2)]}}{# [time of first state, minutes to first state] #}
           second_time: >
             {# figure out if forecast is olf if yes add 6h -> next intervall #}
-            {%set halftime = 6*60-(as_timestamp(now()) - as_timestamp(states.sensor.local_forecast_zambretti_detail.last_updated))/60%}
+            {%set halftime = 6*60-(as_timestamp(now()) - as_timestamp(states.sensor.local_forecast_zambretti_detail.last_changed))/60%}
             {%if halftime<0%}{%set correction = 6+((halftime/60)|float(0))%}{%else%}{%set correction = 0%}{%endif%}
 
             {%set time_offset_second = 9+correction%}{#time from last forecast update to the first forecast state #}
-            {%set time_to = time_offset_second*60-(as_timestamp(now()) - as_timestamp(states.sensor.local_forecast_zambretti_detail.last_updated))/60%}
+            {%set time_to = time_offset_second*60-(as_timestamp(now()) - as_timestamp(states.sensor.local_forecast_zambretti_detail.last_changed))/60%}
             {{[(as_timestamp(now())+time_to*60)| timestamp_custom('%H:%M'), time_to|round(2)]}}{# [time of first state, minutes to first state] #}
 
       - name: Local forecast neg_zam detail
         state: >
-          {{"more details on neg_zam forecast"}}
+          {{"more details on neg_zam forecast", states.sensor.local_forecast.attributes.forecast_neg_zam[1]|int(0)+1}}
         attributes:
           forecast: >
             {% set z = states.sensor.local_forecast.attributes.forecast_neg_zam[1]|int(0)+1%}
@@ -428,19 +428,19 @@ template:
             {{(now,later)}}
           first_time: >
             {# figure out if forecast is olf if yes add 6h -> next intervall #}
-            {%set halftime = 6*60-(as_timestamp(now()) - as_timestamp(states.sensor.local_forecast_neg_zam_detail.last_updated))/60%}
+            {%set halftime = 6*60-(as_timestamp(now()) - as_timestamp(states.sensor.local_forecast_neg_zam_detail.last_changed))/60%}
             {%if halftime<0%}{%set correction = 6+((halftime/60)|float(0))%}{%else%}{%set correction = 0%}{%endif%}
 
             {%set time_offset_first = 3+correction%}{#time from last forecast update to the first forecast state #}
-            {%set time_to = time_offset_first*60-(as_timestamp(now()) - as_timestamp(states.local_forecast_neg_zam_detail.last_updated))/60%}
+            {%set time_to = time_offset_first*60-(as_timestamp(now()) - as_timestamp(states.local_forecast_neg_zam_detail.last_changed))/60%}
             {{[(as_timestamp(now())+time_to*60)| timestamp_custom('%H:%M'), time_to|round(2)]}}{# [time of first state, minutes to first state] #}
           second_time: >
             {# figure out if forecast is olf if yes add 6h -> next intervall #}
-            {%set halftime = 6*60-(as_timestamp(now()) - as_timestamp(states.sensor.local_forecast_neg_zam_detail.last_updated))/60%}
+            {%set halftime = 6*60-(as_timestamp(now()) - as_timestamp(states.sensor.local_forecast_neg_zam_detail.last_changed))/60%}
             {%if halftime<0%}{%set correction = 6+((halftime/60)|float(0))%}{%else%}{%set correction = 0%}{%endif%}
 
             {%set time_offset_second = 9+correction%}{#time from last forecast update to the first forecast state #}
-            {%set time_to = time_offset_second*60-(as_timestamp(now()) - as_timestamp(states.sensor.local_forecast_neg_zam_detail.last_updated))/60%}
+            {%set time_to = time_offset_second*60-(as_timestamp(now()) - as_timestamp(states.sensor.local_forecast_neg_zam_detail.last_changed))/60%}
             {{[(as_timestamp(now())+time_to*60)| timestamp_custom('%H:%M'), time_to|round(2)]}}{# [time of first state, minutes to first state] #}
 
   - sensor:
@@ -466,15 +466,4 @@ sensor:
     state_characteristic: change
     max_age:
       minutes: 60
-# sql:
-#   - name: Local forecast PressureChange yesterday
-#     query: >
-#       SELECT state
-#       FROM states
-#       INNER JOIN states_meta ON states.metadata_id = states_meta.metadata_id
-#       WHERE states_meta.entity_id = 'sensor.total_dc_power'
-#       AND CAST(strftime('%s', last_updated) AS integer) > (CAST(strftime('%s', 'now') AS integer) - 86400)
-#       ORDER BY last_updated_ts DESC
-#       LIMIT 1;
-#     column: "state"
-#     #scan_interval: 30 (default)
+
