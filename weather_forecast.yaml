@@ -1,3 +1,4 @@
+# Sensors
 template:
   - sensor:
       - name: Local forecast
@@ -12,14 +13,14 @@ template:
             {% set language = 0%}{{language}}
           temperature: >
             {# -----> set temperature in celcius (only when pressure_sea = 0) <-----#}
-            {% set temp = states.weather.home.attributes.temperature |int(0)%}
+            {% set temp = states.sensor.weatherstation_temperature.state|float(0)%}
             {{temp}}
           p0: >
             {# -----> pressure sensor (needed) <----- #}
-            {% set pressure = states.weather.tomorrow_io_home_daily.attributes.pressure |float(0)%}
+            {% set pressure = states.sensor.weatherstation_barometer_absolute.state|float(0)%}
 
             {# -----> pressure at sealevel: set to 1 else set to 0 (needed) <-----#}
-            {% set pressure_sea = 1%}
+            {% set pressure_sea = 0%}
 
             {# -----> set height above sealevel in meters (only when pressure_sea = 0) <-----#}
             {% set height = 410%}
@@ -30,10 +31,10 @@ template:
             {{p0}}
           wind_direction: >
             {# -----> set wind direction in degrees (optional else 0) <----- #}
-            {% set wind_dir = states.weather.home.attributes.wind_bearing|int(0)%}
+            {% set wind_dir = states.sensor.weatherstation_temperature.state|int(0)%}
 
             {# -----> set wind speed (optional else 0) <----- #}
-            {%set wind_speed = states.weather.home.attributes.wind_speed|float(0)%}
+            {%set wind_speed = states.sensor.weatherstation_wind_speed.state|float(0)%}
 
 
             {# ----------------------------------------------- Config end ----------------------------------------------- #}
@@ -345,6 +346,7 @@ template:
             {%elif forecast[0]==1 and forecast[1]>=2 %}{%set rain_prob = [20,60]%}
             {%elif forecast[0]==2 and forecast[1]==2 %}{%set rain_prob = [50,50]%}
             {%elif forecast[0]==2 and forecast[1]>2 %}{%set rain_prob = [50,70]%}
+            {%elif forecast[0]>=2 and forecast[1]<2 %}{%set rain_prob = [50,10]%}
             {%else%}{%set rain_prob = [90,90]%}{%endif%}
             {{rain_prob}}
 
@@ -357,11 +359,19 @@ template:
             {%set later = conditions[forecast[1]|int(0)][daynight|int(0)]%}
             {{(now,later)}}
           first_time: >
-            {%set time_offset_first = 3%}{#time from last forecast update to the first forecast state #}
+            {# figure out if forecast is olf if yes add 6h -> next intervall #}
+            {%set halftime = 6*60-(as_timestamp(now()) - as_timestamp(states.sensor.local_forecast_zambretti_detail.last_changed))/60%}
+            {%if halftime<0%}{%set correction = 6+((halftime/60)|float(0))%}{%else%}{%set correction = 0%}{%endif%}
+
+            {%set time_offset_first = 3+correction%}{#time from last forecast update to the first forecast state #}
             {%set time_to = time_offset_first*60-(as_timestamp(now()) - as_timestamp(states.sensor.local_forecast_zambretti_detail.last_changed))/60%}
             {{[(as_timestamp(now())+time_to*60)| timestamp_custom('%H:%M'), time_to|round(2)]}}{# [time of first state, minutes to first state] #}
           second_time: >
-            {%set time_offset_second = 9%}{#time from last forecast update to the first forecast state #}
+            {# figure out if forecast is olf if yes add 6h -> next intervall #}
+            {%set halftime = 6*60-(as_timestamp(now()) - as_timestamp(states.sensor.local_forecast_zambretti_detail.last_changed))/60%}
+            {%if halftime<0%}{%set correction = 6+((halftime/60)|float(0))%}{%else%}{%set correction = 0%}{%endif%}
+
+            {%set time_offset_second = 9+correction%}{#time from last forecast update to the first forecast state #}
             {%set time_to = time_offset_second*60-(as_timestamp(now()) - as_timestamp(states.sensor.local_forecast_zambretti_detail.last_changed))/60%}
             {{[(as_timestamp(now())+time_to*60)| timestamp_custom('%H:%M'), time_to|round(2)]}}{# [time of first state, minutes to first state] #}
 
@@ -417,19 +427,27 @@ template:
             {%set later = conditions[forecast[1]|int(0)][daynight|int(0)]%}
             {{(now,later)}}
           first_time: >
-            {%set time_offset_first = 3%}{#time from last forecast update to the first forecast state #}
+            {# figure out if forecast is olf if yes add 6h -> next intervall #}
+            {%set halftime = 6*60-(as_timestamp(now()) - as_timestamp(states.sensor.local_forecast_neg_zam_detail.last_changed))/60%}
+            {%if halftime<0%}{%set correction = 6+((halftime/60)|float(0))%}{%else%}{%set correction = 0%}{%endif%}
+
+            {%set time_offset_first = 3+correction%}{#time from last forecast update to the first forecast state #}
             {%set time_to = time_offset_first*60-(as_timestamp(now()) - as_timestamp(states.local_forecast_neg_zam_detail.last_changed))/60%}
             {{[(as_timestamp(now())+time_to*60)| timestamp_custom('%H:%M'), time_to|round(2)]}}{# [time of first state, minutes to first state] #}
           second_time: >
-            {%set time_offset_second = 9%}{#time from last forecast update to the first forecast state #}
+            {# figure out if forecast is olf if yes add 6h -> next intervall #}
+            {%set halftime = 6*60-(as_timestamp(now()) - as_timestamp(states.sensor.local_forecast_neg_zam_detail.last_changed))/60%}
+            {%if halftime<0%}{%set correction = 6+((halftime/60)|float(0))%}{%else%}{%set correction = 0%}{%endif%}
+
+            {%set time_offset_second = 9+correction%}{#time from last forecast update to the first forecast state #}
             {%set time_to = time_offset_second*60-(as_timestamp(now()) - as_timestamp(states.sensor.local_forecast_neg_zam_detail.last_changed))/60%}
             {{[(as_timestamp(now())+time_to*60)| timestamp_custom('%H:%M'), time_to|round(2)]}}{# [time of first state, minutes to first state] #}
 
   - sensor:
       - name: Local forecast Pressure
         state: "{{ states.sensor.local_forecast.attributes.p0|float(0) }}"
-      - name: tmp temperature
-        state: "{{ states.weather.home.attributes.temperature|float(0) }}"
+      - name: Local forecast temperature
+        state: "{{ states.sensor.local_forecast.attributes.temperature|float(0) }}"
 
 sensor:
   - platform: statistics
@@ -440,7 +458,7 @@ sensor:
       minutes: 180
   - platform: statistics
     name: Local forecast TemperatureChange
-    entity_id: sensor.tmp_temperature
+    entity_id: sensor.local_forecast_temperature
     state_characteristic: change
     max_age:
       minutes: 60
