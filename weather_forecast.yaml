@@ -95,7 +95,7 @@ template:
             {%set p0change = states.sensor.local_forecast_pressurechange.state |float(0)%}
             {%set windfak = states.sensor.local_forecast.attributes.wind_direction[0]|int(0)%}
             {%set windfak_speed = states.sensor.local_forecast.attributes.wind_direction[3]|int(0)%}
-            {%if p0change<(-1.6) %}{%set trend = '-1'%}{%elif p0change>(1.6) %}{%set trend = '1'%}{%else%}{%set trend = '0'%}{%endif%}
+            {%if p0change<=(-1.6) %}{%set trend = '-1'%}{%elif p0change>=(1.6) %}{%set trend = '1'%}{%else%}{%set trend = '0'%}{%endif%}
             {# Calc forecast#}
             {%if trend == '-1' %} {# falling pressure#}
             {%set z = (127-0.12*p0)|round(0)|int(0)%}
@@ -198,7 +198,7 @@ template:
             {%set bar_range = bar_top-bar_bottom%}
             {%set constant = (bar_range/22)|round(3)%} {# calc range of pressure to options#}
             {%if 2 < now().month < 11%}{%set season = 1%}{#summer#}{%else%}{%set season = 0%}{#winter#}{%endif%}
-            {%if p0change<(-1.6) %}{%set trend = '-1'%}{%elif p0change>(1.6) %}{%set trend = '1'%}{%else%}{%set trend = '0'%}{%endif%}
+            {%if p0change<=(-1.6) %}{%set trend = '-1'%}{%elif p0change>=(1.6) %}{%set trend = '1'%}{%else%}{%set trend = '0'%}{%endif%}
             {#northern hemisphere#}
             {%set z_hp = p0%}
             {%if hem == 1 %}
@@ -289,7 +289,7 @@ template:
             {%set language = states.sensor.local_forecast.attributes.language|int(0)%}
             {%set p0 = states.sensor.local_forecast.attributes.p0|float(0)%}
             {%set trend_lang=[('fallend','falling'),('steigend','rising'),('stabil','steady')]%}
-            {%if p0change<(-1.6) %}{%set trend = '0'%}{%elif p0change>(1.6) %}{%set trend = '1'%}{%else%}{%set trend = '2'%}{%endif%}
+            {%if p0change<=(-1.6) %}{%set trend = '0'%}{%elif p0change>=(1.6) %}{%set trend = '1'%}{%else%}{%set trend = '2'%}{%endif%}
             {{[trend_lang[trend|int][language],trend]}}
 
           forecast_temp_short: >
@@ -360,19 +360,19 @@ template:
             {{(now,later)}}
           first_time: >
             {# figure out if forecast is olf if yes add 6h -> next intervall #}
-            {%set halftime = 6*60-(as_timestamp(now()) - as_timestamp(states.sensor.local_forecast_zambretti_detail.last_changed))/60%}
-            {%if halftime<0%}{%set correction = 6-((halftime/60)|float(0))%}{%else%}{%set correction = 0%}{%endif%}
+            {%set halftime = 6*60-(as_timestamp(now()) - as_timestamp(states.sensor.local_forecast_zambretti_detail.last_updated))/60%}
+            {%if halftime<0%}{%set correction = 6+((halftime/60)|float(0))%}{%else%}{%set correction = 0%}{%endif%}
 
             {%set time_offset_first = 3+correction%}{#time from last forecast update to the first forecast state #}
-            {%set time_to = time_offset_first*60-(as_timestamp(now()) - as_timestamp(states.sensor.local_forecast_zambretti_detail.last_changed))/60%}
+            {%set time_to = time_offset_first*60-(as_timestamp(now()) - as_timestamp(states.sensor.local_forecast_zambretti_detail.last_updated))/60%}
             {{[(as_timestamp(now())+time_to*60)| timestamp_custom('%H:%M'), time_to|round(2)]}}{# [time of first state, minutes to first state] #}
           second_time: >
             {# figure out if forecast is olf if yes add 6h -> next intervall #}
-            {%set halftime = 6*60-(as_timestamp(now()) - as_timestamp(states.sensor.local_forecast_zambretti_detail.last_changed))/60%}
-            {%if halftime<0%}{%set correction = 6-((halftime/60)|float(0))%}{%else%}{%set correction = 0%}{%endif%}
+            {%set halftime = 6*60-(as_timestamp(now()) - as_timestamp(states.sensor.local_forecast_zambretti_detail.last_updated))/60%}
+            {%if halftime<0%}{%set correction = 6+((halftime/60)|float(0))%}{%else%}{%set correction = 0%}{%endif%}
 
             {%set time_offset_second = 9+correction%}{#time from last forecast update to the first forecast state #}
-            {%set time_to = time_offset_second*60-(as_timestamp(now()) - as_timestamp(states.sensor.local_forecast_zambretti_detail.last_changed))/60%}
+            {%set time_to = time_offset_second*60-(as_timestamp(now()) - as_timestamp(states.sensor.local_forecast_zambretti_detail.last_updated))/60%}
             {{[(as_timestamp(now())+time_to*60)| timestamp_custom('%H:%M'), time_to|round(2)]}}{# [time of first state, minutes to first state] #}
 
       - name: Local forecast neg_zam detail
@@ -428,19 +428,19 @@ template:
             {{(now,later)}}
           first_time: >
             {# figure out if forecast is olf if yes add 6h -> next intervall #}
-            {%set halftime = 6*60-(as_timestamp(now()) - as_timestamp(states.sensor.local_forecast_neg_zam_detail.last_changed))/60%}
-            {%if halftime<0%}{%set correction = 6-((halftime/60)|float(0))%}{%else%}{%set correction = 0%}{%endif%}
+            {%set halftime = 6*60-(as_timestamp(now()) - as_timestamp(states.sensor.local_forecast_neg_zam_detail.last_updated))/60%}
+            {%if halftime<0%}{%set correction = 6+((halftime/60)|float(0))%}{%else%}{%set correction = 0%}{%endif%}
 
             {%set time_offset_first = 3+correction%}{#time from last forecast update to the first forecast state #}
-            {%set time_to = time_offset_first*60-(as_timestamp(now()) - as_timestamp(states.local_forecast_neg_zam_detail.last_changed))/60%}
+            {%set time_to = time_offset_first*60-(as_timestamp(now()) - as_timestamp(states.local_forecast_neg_zam_detail.last_updated))/60%}
             {{[(as_timestamp(now())+time_to*60)| timestamp_custom('%H:%M'), time_to|round(2)]}}{# [time of first state, minutes to first state] #}
           second_time: >
             {# figure out if forecast is olf if yes add 6h -> next intervall #}
-            {%set halftime = 6*60-(as_timestamp(now()) - as_timestamp(states.sensor.local_forecast_neg_zam_detail.last_changed))/60%}
-            {%if halftime<0%}{%set correction = 6-((halftime/60)|float(0))%}{%else%}{%set correction = 0%}{%endif%}
+            {%set halftime = 6*60-(as_timestamp(now()) - as_timestamp(states.sensor.local_forecast_neg_zam_detail.last_updated))/60%}
+            {%if halftime<0%}{%set correction = 6+((halftime/60)|float(0))%}{%else%}{%set correction = 0%}{%endif%}
 
             {%set time_offset_second = 9+correction%}{#time from last forecast update to the first forecast state #}
-            {%set time_to = time_offset_second*60-(as_timestamp(now()) - as_timestamp(states.sensor.local_forecast_neg_zam_detail.last_changed))/60%}
+            {%set time_to = time_offset_second*60-(as_timestamp(now()) - as_timestamp(states.sensor.local_forecast_neg_zam_detail.last_updated))/60%}
             {{[(as_timestamp(now())+time_to*60)| timestamp_custom('%H:%M'), time_to|round(2)]}}{# [time of first state, minutes to first state] #}
 
   - sensor:
