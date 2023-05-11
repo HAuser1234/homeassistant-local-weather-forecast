@@ -31,7 +31,7 @@ template:
             {{p0}}
           wind_direction: >
             {# -----> set wind direction in degrees (optional else 0) <----- #}
-            {% set wind_dir = states.sensor.weatherstation_temperature.state|int(0)%}
+            {% set wind_dir = states.sensor.weatherstation_wind_direction.state|int(0)%}
 
             {# -----> set wind speed (optional else 0) <----- #}
             {%set wind_speed = states.sensor.weatherstation_wind_speed.state|float(0)%}
@@ -40,7 +40,7 @@ template:
             {# ----------------------------------------------- Config end ----------------------------------------------- #}
 
             {# is there even wind ? #}
-            {%if wind_speed < 3%}{#calm#}{%set wind_speed_fak = 0%}
+            {%if wind_speed < 2%}{#calm#}{%set wind_speed_fak = 0%}
             {%else%}{#wind#}{%set wind_speed_fak = 1%}
             {%endif%}
 
@@ -445,9 +445,13 @@ template:
 
   - sensor:
       - name: Local forecast Pressure
-        state: "{{ states.sensor.local_forecast.attributes.p0|float(0) }}"
+        unit_of_measurement: "hpa"
+        state: >
+          {{ states.sensor.local_forecast.attributes.p0|float(states.sensor.local_forecast_pressure.state) }}
       - name: Local forecast temperature
-        state: "{{ states.sensor.local_forecast.attributes.temperature|float(0) }}"
+        unit_of_measurement: "°C"
+        state: >
+          {{ states.sensor.local_forecast.attributes.temperature|float(states.sensor.local_forecast_temperature.state) }}
 
 sensor:
   - platform: statistics
