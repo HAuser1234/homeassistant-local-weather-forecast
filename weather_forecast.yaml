@@ -28,7 +28,7 @@ template:
             {# Calc pressure at sealevel -> p0 (if necessary)#}
             {% set temp = states.sensor.local_forecast.attributes.temperature|float(0)%}
             {% set p0 = pressure*pressure_sea-(pressure_sea-1)*pressure*(1-((0.0065*height)/(temp+(0.0065*height)+273.15)))**(-5.257)%}
-            {{p0}}
+            {{p0|round(0)}}
           wind_direction: >
             {# -----> set wind direction in degrees (optional else 0) <----- #}
             {% set wind_dir = states.sensor.weatherstation_wind_direction.state|int(0)%}
@@ -70,7 +70,7 @@ template:
             {% elif 326.25 < dir <= 348.75 %}{% set dir_text = "NNW"%}  
             {% else %}{% set dir_text = "N"%}  
             {% endif %}
-            {{[wind_fak,wind_dir,dir_text,wind_speed_fak]}}
+            {{[wind_fak,none,dir_text,wind_speed_fak]}}
           forecast_short_term: >
             {# Calc current condtions#}
             {%set language = states.sensor.local_forecast.attributes.language|int(0)%}
@@ -466,3 +466,15 @@ sensor:
     state_characteristic: change
     max_age:
       minutes: 60
+# sql:
+#   - name: Local forecast PressureChange yesterday
+#     query: >
+#       SELECT state
+#       FROM states
+#       INNER JOIN states_meta ON states.metadata_id = states_meta.metadata_id
+#       WHERE states_meta.entity_id = 'sensor.total_dc_power'
+#       AND CAST(strftime('%s', last_updated) AS integer) > (CAST(strftime('%s', 'now') AS integer) - 86400)
+#       ORDER BY last_updated_ts DESC
+#       LIMIT 1;
+#     column: "state"
+#     #scan_interval: 30 (default)
