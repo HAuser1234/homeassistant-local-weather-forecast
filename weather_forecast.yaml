@@ -13,7 +13,7 @@ template:
             {% set language = 0%}{{language}}
           temperature: >
             {# -----> set temperature in celcius (only when pressure_sea = 0) <-----#}
-            {% set temp = states.sensor.weatherstation_temperature.state|float(0)%}
+            {% set temp = states.sensor.weatherstation_temperature.state|float(1)%}
             {{temp}}
           p0: >
             {# -----> pressure sensor (needed) <----- #}
@@ -23,12 +23,12 @@ template:
             {% set pressure_sea = 0%}
 
             {# -----> set height above sealevel in meters (only when pressure_sea = 0) <-----#}
-            {% set height = 410%}
+            {% set height = 370%}
 
             {# Calc pressure at sealevel -> p0 (if necessary)#}
-            {% set temp = states.sensor.local_forecast.attributes.temperature|float(0)%}
+            {% set temp = states.sensor.local_forecast.attributes.temperature|float(1)%}
             {% set p0 = pressure*pressure_sea-(pressure_sea-1)*pressure*(1-((0.0065*height)/(temp+(0.0065*height)+273.15)))**(-5.257)%}
-            {{p0|round(0)}}
+            {{p0|round(1)}}
           wind_direction: >
             {# -----> set wind direction in degrees (optional else 0) <----- #}
             {% set wind_dir = states.sensor.weatherstation_wind_direction.state|int(0)%}
@@ -40,7 +40,7 @@ template:
             {# ----------------------------------------------- Config end ----------------------------------------------- #}
 
             {# is there even wind ? #}
-            {%if wind_speed < 2%}{#calm#}{%set wind_speed_fak = 0%}
+            {%if wind_speed < 1%}{#calm#}{%set wind_speed_fak = 0%}
             {%else%}{#wind#}{%set wind_speed_fak = 1%}
             {%endif%}
 
@@ -70,7 +70,7 @@ template:
             {% elif 326.25 < dir <= 348.75 %}{% set dir_text = "NNW"%}  
             {% else %}{% set dir_text = "N"%}  
             {% endif %}
-            {{[wind_fak,none,dir_text,wind_speed_fak]}}
+            {{[wind_fak,dir,dir_text,wind_speed_fak]}}
           forecast_short_term: >
             {# Calc current condtions#}
             {%set language = states.sensor.local_forecast.attributes.language|int(0)%}
@@ -95,7 +95,7 @@ template:
             {%set p0change = states.sensor.local_forecast_pressurechange.state |float(0)%}
             {%set windfak = states.sensor.local_forecast.attributes.wind_direction[0]|int(0)%}
             {%set windfak_speed = states.sensor.local_forecast.attributes.wind_direction[3]|int(0)%}
-            {%if p0change<=(-1.6) %}{%set trend = '-1'%}{%elif p0change>=(1.6) %}{%set trend = '1'%}{%else%}{%set trend = '0'%}{%endif%}
+            {%if p0change<=(-1.0) %}{%set trend = '-1'%}{%elif p0change>=(1.0) %}{%set trend = '1'%}{%else%}{%set trend = '0'%}{%endif%}
             {# Calc forecast#}
             {%if trend == '-1' %} {# falling pressure#}
             {%set z = (127-0.12*p0)|round(0)|int(0)%}
@@ -316,20 +316,20 @@ template:
             {%elif z == 2%}{%set forecast = [1,1]%}
             {%elif z == 3%}{%set forecast = [2,1]%}
             {%elif z == 4%}{%set forecast = [1,2]%}
-            {%elif z == 5%}{%set forecast = [2,2]%}
-            {%elif z == 6%}{%set forecast = [2,1]%}
+            {%elif z == 5%}{%set forecast = [1,1]%}
+            {%elif z == 6%}{%set forecast = [1,0]%}
             {%elif z == 7%}{%set forecast = [2,1]%}
             {%elif z == 8%}{%set forecast = [1,4]%}
             {%elif z == 9%}{%set forecast = [4,2]%}
             {%elif z == 10%}{%set forecast = [4,4]%}
-            {%elif z == 11%}{%set forecast = [2,2]%}
+            {%elif z == 11%}{%set forecast = [1,1]%}
             {%elif z == 12%}{%set forecast = [3,1]%}
             {%elif z == 13%}{%set forecast = [3,3]%}
             {%elif z == 14%}{%set forecast = [2,2]%}
             {%elif z == 15%}{%set forecast = [4,5]%}
             {%elif z == 16%}{%set forecast = [4,4]%}
             {%elif z == 17%}{%set forecast = [2,2]%}
-            {%elif z == 18%}{%set forecast = [1,4]%}
+            {%elif z == 18%}{%set forecast = [2,4]%}
             {%elif z == 19%}{%set forecast = [2,2]%}
             {%elif z == 20%}{%set forecast = [5,5]%}
             {%elif z == 21%}{%set forecast = [2,4]%}
@@ -342,7 +342,10 @@ template:
           rain_prob: >
             {# give approx. values for rain probability #}
             {%set forecast = states.sensor.local_forecast_zambretti_detail.attributes.forecast%}
-            {%if forecast[0]<2 and forecast[1]<2 %}{%set rain_prob = [0,0]%}
+            {%if forecast[0]==0 and forecast[1]==0 %}{%set rain_prob = [0,0]%}
+            {%elif forecast[0]==2 and forecast[1]==1 %}{%set rain_prob = [60,10]%}
+            {%elif forecast[0]==1 and forecast[1]==1 %}{%set rain_prob = [30,30]%}
+            {%elif forecast[0]==1 and forecast[1]==0 %}{%set rain_prob = [10,0]%}
             {%elif forecast[0]==1 and forecast[1]>=2 %}{%set rain_prob = [20,60]%}
             {%elif forecast[0]==2 and forecast[1]==2 %}{%set rain_prob = [50,50]%}
             {%elif forecast[0]==2 and forecast[1]>2 %}{%set rain_prob = [50,70]%}
@@ -399,7 +402,7 @@ template:
             {%elif z == 15%}{%set forecast = [4,5]%}
             {%elif z == 16%}{%set forecast = [4,4]%}
             {%elif z == 17%}{%set forecast = [2,2]%}
-            {%elif z == 18%}{%set forecast = [1,4]%}
+            {%elif z == 18%}{%set forecast = [2,4]%}
             {%elif z == 19%}{%set forecast = [2,2]%}
             {%elif z == 20%}{%set forecast = [5,5]%}
             {%elif z == 21%}{%set forecast = [2,4]%}
@@ -466,4 +469,3 @@ sensor:
     state_characteristic: change
     max_age:
       minutes: 60
-
