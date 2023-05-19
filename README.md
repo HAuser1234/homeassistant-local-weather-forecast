@@ -8,6 +8,7 @@ this homeassistant integration creates sensors to forecast local weather without
 Therefore it helps to get accurate weather data for the next 12h without the problem of changing services, API's ...
 Also only a barometer as a sensor is required (can also be pulled from online). But the forecast can be made more accurate with more sensors.
 For me the zambretti forecaster ist pretty accurate, but you will have to monitor both Models in order to find the better one for your location.
+
 If you like this repository please leave a star ⭐
 
 
