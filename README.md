@@ -1,5 +1,6 @@
 # Homeassistant 12h local weather forecast. ~94% accurate*
-<a href="buymeacoffee.com/tobineidhaj" target="_blank"><img src="https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png" alt="Buy Me A Coffee" style="height: 41px !important;width: 174px !important;box-shadow: 0px 3px 2px 0px rgba(190, 190, 190, 0.5) !important;-webkit-box-shadow: 0px 3px 2px 0px rgba(190, 190, 190, 0.5) !important;" ></a>
+<a href="https://www.buymeacoffee.com/hauser1234" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/default-orange.png" alt="Buy Me A Coffee" height="41" width="174"></a>
+
 
 <b> new Ecowitt integration released! use https://github.com/HAuser1234/HA_Ecowitt_Extended to direcly integrate your Ecowitt based weatherstation with this integration!</b>
 
