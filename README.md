@@ -1,5 +1,7 @@
 # Homeassistant 12h local weather forecast. ~94% accurate*
 
+<b> new Ecowitt integration released! use https://github.com/HAuser1234/HA_Ecowitt_Extended to direcly integrate your Ecowitt based weatherstation with this integration!</b>
+
 this homeassistant integration creates sensors to forecast local weather without the need for external services.
 Therefore it helps to get accurate weather data for the next 12h without the problem of changing services, API's ...
 Also only a barometer as a sensor is required (can also be pulled from online). But the forecast can be made more accurate with more sensors.
