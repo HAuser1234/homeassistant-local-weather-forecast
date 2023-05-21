@@ -83,7 +83,7 @@ template:
             {% set current_condtion = [conditions[1][language],pressure_system[0][language]]%}
             {% elif p0>=1000 and p0<1020 %}
             {% set current_condtion = [conditions[2][language],pressure_system[1][language]]%}
-            {% elif p0>=120 and p0<1040 %}
+            {% elif p0>=1020 and p0<1040 %}
             {% set current_condtion = [conditions[3][language],pressure_system[2][language]]%}
             {% elif p0>=1040 %}
             {% set current_condtion = [conditions[4][language],pressure_system[2][language]]%}
