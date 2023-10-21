@@ -288,7 +288,7 @@ template:
             {%set p0change = states.sensor.local_forecast_pressurechange.state |float(0)%}
             {%set language = states.sensor.local_forecast.attributes.language|int(0)%}
             {%set p0 = states.sensor.local_forecast.attributes.p0|float(0)%}
-            {%set trend_lang=[('fallend','falling'),('steigend','rising'),('stabil','steady')]%}
+            {%set trend_lang=[('fallend','falling','πέφτοντας'),('steigend','rising','αυξανόμενη'),('stabil','steady','σταθερή')]%}
             {%if p0change<=(-1.6) %}{%set trend = '0'%}{%elif p0change>=(1.6) %}{%set trend = '1'%}{%else%}{%set trend = '2'%}{%endif%}
             {{[trend_lang[trend|int][language],trend]}}
 
