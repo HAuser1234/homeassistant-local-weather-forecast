@@ -1,0 +1,58 @@
+type: custom:vertical-stack-in-card
+cards:
+  - type: custom:mushroom-title-card
+    title: '{{states.sensor.local_forecast.state}}'
+  - type: horizontal-stack
+    cards:
+      - type: custom:mushroom-template-card
+        primary: '{{states.sensor.local_forecast.attributes.forecast_short_term[0]}}'
+        secondary: >-
+          -
+
+          {%if states.sensor.local_forecast.attributes.forecast_temp_short[1] >=
+          0%}{{states.sensor.local_forecast.attributes.temperature}}°C{%endif%}
+        icon: mdi:weather-cloudy-clock
+        icon_color: none
+        layout: vertical
+        multiline_secondary: true
+      - type: custom:mushroom-template-card
+        primary: >-
+          ~
+          {{states.sensor.local_forecast_zambretti_detail.attributes.first_time[0]}}
+          h
+        secondary: >-
+          Rain:
+          {{states.sensor.local_forecast_zambretti_detail.attributes.rain_prob[0]}}%
+
+          {%if states.sensor.local_forecast.attributes.forecast_temp_short[1] ==
+          0%}{{states.sensor.local_forecast.attributes.forecast_temp_short[0]}}°C{%endif%}
+        icon: '{{states.sensor.local_forecast_zambretti_detail.attributes.icons[0]}}'
+        icon_color: none
+        layout: vertical
+        multiline_secondary: true
+      - type: custom:mushroom-template-card
+        primary: >-
+          ~
+          {{states.sensor.local_forecast_zambretti_detail.attributes.second_time[0]}}
+        secondary: >-
+          Rain:
+          {{states.sensor.local_forecast_zambretti_detail.attributes.rain_prob[1]}}%
+
+          {%if states.sensor.local_forecast.attributes.forecast_temp_short[1] ==
+          1%}{{states.sensor.local_forecast.attributes.forecast_temp_short[0]}}°C{%endif%}
+        icon: '{{states.sensor.local_forecast_zambretti_detail.attributes.icons[1]}}'
+        icon_color: none
+        layout: vertical
+        multiline_secondary: true
+  - type: custom:mushroom-template-card
+    primary: >-
+      forecast:
+      {{states.sensor.local_forecast.attributes.forecast_zambretti[0]}}
+    secondary: >-
+      Πίεση:
+      {{states.sensor.local_forecast.attributes.forecast_pressure_trend[0]}}  
+      {{states.sensor.local_forecast_pressurechange.state}} hpa in 3h
+    icon: mdi:weather-cloudy-arrow-right
+    multiline_secondary: true
+    icon_color: grey
+    fill_container: false
