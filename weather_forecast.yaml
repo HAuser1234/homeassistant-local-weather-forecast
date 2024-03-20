@@ -4,19 +4,19 @@ template:
       - name: Local forecast
         state: >
           {# -----> Language: 0 = German ; 1 = English  ; 2 = Ελληνικά <----- #}
-          {%set title = ["Lokale Wettervorhersage","Local weather forecast","Τοπική πρόγνωση καιρού"]%}
-          {{title[0]}}
+          {%set title = ["Lokale Wettervorhersage","12hr Local Weather Forecast","Τοπική πρόγνωση καιρού"]%}
+          {{title[1]}}
 
         attributes:
           language: >
             {# -----> Language: 0 = German ; 1 = English  ; 2 = Ελληνικά <----- #}
-            {% set language = 0%}{{language}}
+            {% set language = 1%}{{language}}
           temperature: >
-            {# -----> set temperature in celcius (only when pressure_sea = 0) <-----#}
+            {# -----> set temperature in xx.x°C (only when pressure_sea = 0) <-----#}
             {% set temp = states.sensor.weatherstation_temperature.state|float(1)%}
             {{temp}}
           p0: >
-            {# -----> pressure sensor (needed) <----- #}
+            {# -----> pressure sensor in xxxx.xxhPa (needed) <----- #}
             {% set pressure = states.sensor.weatherstation_barometer_absolute.state|float(0)%}
 
             {# -----> pressure at sealevel: set to 1 else set to 0 (needed) <-----#}
@@ -30,21 +30,21 @@ template:
             {% set p0 = pressure*pressure_sea-(pressure_sea-1)*pressure*(1-((0.0065*height)/(temp+(0.0065*height)+273.15)))**(-5.257)%}
             {{p0|round(1)}}
           wind_direction: >
-            {# -----> set wind direction in degrees (optional else 0) <----- #}
+            {# -----> set wind direction in degrees (optional, else 0) <----- #}
             {% set wind_dir = states.sensor.weatherstation_wind_direction.state|int(0)%}
 
-            {# -----> set wind speed (optional else 0) <----- #}
+            {# -----> set average wind speed in km/h (optional, else 0) <----- #}
             {%set wind_speed = states.sensor.weatherstation_wind_speed.state|float(0)%}
 
 
             {# ----------------------------------------------- Config end ----------------------------------------------- #}
 
-            {# is there even wind ? #}
+            {# is there even wind? #}
             {%if wind_speed < 1%}{#calm#}{%set wind_speed_fak = 0%}
             {%else%}{#wind#}{%set wind_speed_fak = 1%}
             {%endif%}
 
-            {# Calc Wind bearing to south or north#}
+            {# Calc. wind bearing N or S #}
             {% if wind_dir >=135 and  wind_dir <=225%}
             {% set wind_fak = 2%}{#Wind from south#}
             {% elif wind_dir >= 315 or wind_dir <= 45 %}
@@ -72,10 +72,10 @@ template:
             {% endif %}
             {{[wind_fak,dir,dir_text,wind_speed_fak]}}
           forecast_short_term: >
-            {# Calc current condtions#}
+            {# Calc. current conditions #}
             {%set language = states.sensor.local_forecast.attributes.language|int(0)%}
-            {%set conditions = [('stürmisch','stormy','θυελλώδης','Tempestoso'),('regnerisch','rainy','Βροχερός','Piovoso'),('wechselhaft','mixed','Μεταβλητός','Variabile'),('sonnig','sunny','Ηλιόλουστος','Soleggiato'),('sehr trocken','extra dry','Πολύ ξηρός','Molto Secco')]%}
-            {%set pressure_system = [('Tiefdruckgebiet','low pressure system','σύστημα χαμηλής πίεσης','Bassa Pressione'),('Normal','normal','φυσιολογικός','Normale'),('Hochdruckgebiet','high pressure system','σύστημα υψηλής πίεσης','Zona Alta Pressione')]%}
+            {%set conditions = [('stürmisch','Stormy','θυελλώδης','Tempestoso'),('regnerisch','Rainy','Βροχερός','Piovoso'),('wechselhaft','Mixed','Μεταβλητός','Variabile'),('sonnig','Sunny','Ηλιόλουστος','Soleggiato'),('sehr trocken','Extra Dry','Πολύ ξηρός','Molto Secco')]%}
+            {%set pressure_system = [('Tiefdruckgebiet','Low Pressure System','σύστημα χαμηλής πίεσης','Bassa Pressione'),('Normal','Normal','φυσιολογικός','Normale'),('Hochdruckgebiet','High Pressure System','σύστημα υψηλής πίεσης','Zona Alta Pressione')]%}
             {%set p0 = states.sensor.local_forecast.attributes.p0|float(0)%}
             {% if p0<980 %}
             {% set current_condtion = [conditions[0][language],pressure_system[0][language]]%}
@@ -90,18 +90,18 @@ template:
             {%endif%}
             {{current_condtion}}
           forecast_zambretti: >
-            {#get specific forecast num based on pressure trend#}
+            {# get specific forecast num based on pressure trend #}
             {%set p0 = states.sensor.local_forecast.attributes.p0|float(0)%}
-            {%set p0change = states.sensor.local_forecast_pressurechange.state |float(0)%}
+            {%set p0change = states.sensor.local_forecast_pressurechange.state|float(0)%}
             {%set windfak = states.sensor.local_forecast.attributes.wind_direction[0]|int(0)%}
             {%set windfak_speed = states.sensor.local_forecast.attributes.wind_direction[3]|int(0)%}
             {%if p0change<=(-1.0) %}{%set trend = '-1'%}{%elif p0change>=(1.0) %}{%set trend = '1'%}{%else%}{%set trend = '0'%}{%endif%}
-            {# Calc forecast#}
+            {# Calc. forecast #}
             {%if trend == '-1' %} {# falling pressure#}
             {%set z = (127-0.12*p0)|round(0)|int(0)%}
             {%elif trend == '0'%} {# steady pressure#}
             {%set z = (144-0.13*p0)|round(0)|int(0)%}
-            {#winter and summer adjustment#}
+            {# winter and summer adjustment #}
             {%if 2 < now().month < 11%}
             {%set z = z%}{#summer#}{%else%}
             {%set z = z-1%} {#winter#}{%endif%}
@@ -115,7 +115,7 @@ template:
             {%set z = (z + windfak*windfak_speed) %} 
             {# generate report #}
             {%set language = states.sensor.local_forecast.attributes.language|int(0)%}
-            {%set t_lang = [('Beständiges Schönwetter!','Settled Fine','Σταθερός καλός καιρός!'),('Schönes Wetter!','fine','Ωραίος καιρός!'),('Es wird schöner.','Becoming Fine','Θα καλυτερεύσει.'),('Schön, wird wechselhaft.','Fine Becoming Less Settled','Μεταβλητός.'),('Schön, Regenschauer möglich.','Fine, Possibly showers','Πιθανή βροχή.'),('Heiter bis wolkig, Besserung zu erwarten.','Fairly Fine, Improving','Αίθριος έως νεφελώδης, αναμένεται βελτίωση.'),('Heiter bis wolkig, anfangs evtl. Schauer.','Fairly Fine, Possibly showers, early','Αίθριος έως συννεφιασμένος, πιθανώς βροχές στην αρχή.'),('Heiter bis wolkig, später Regen.','Fairly Fine Showery Later','Αίθριος έως συννεφιασμένος, αργότερα βροχή.'),('Anfangs noch Schauer, dann Besserung.','Showery Early, Improving','Βροχόπτωση στην αρχή και μετά βελτίωση.'),('Wechselhaft mit Schauern','Changeable Mending','Εναλλαγή με βροχόπτωση.'),('Heiter bis wolkig, vereinzelt Regen.','Fairly Fine , Showers likely','Αίθριος έως συννεφιασμένος, κατά διαστήματα βροχή.'),('Unbeständig, später Aufklarung.','Rather Unsettled Clearing Later','Ασταθής, αργότερα καθάρος.'),('Unbeständig, evtl. Besserung.','Unsettled, Probably Improving','Ασταθής, πιθανώς βελτίωση.'),('Regnerisch mit heiteren Phasen.','Showery Bright Intervals','Καθαρός με διαστήματα βροχής.'),('Regnerisch, wird unbeständiger.','Showery Becoming more unsettled','Βροχερό, όλο και πιο ασταθές.'),('Wechselhaft mit etwas Regen.','Changeable some rain','Αλλάζει με λίγη βροχή.'),('Unbeständig mit heiteren Phasen.','Unsettled, short fine Intervals','Άστατα, μικρά καθαρά διαστήματα'),('Unbeständig, später Regen.','Unsettled, Rain later','Άστατη, αργότερα βροχή.'),('Unbeständig mit etwas Regen.','Unsettled, rain at times','Άστατος με λίγη βροχή.'),('Wechselhaft und regnerisch','Very Unsettled, Finer at times','Μεταβλητός και βροχερός.'),('Gelegentlich Regen, Verschlechterung.','Rain at times, worse later','Περιστασιακές βροχές, επιδείνωση.'),('Zuweilen Regen, sehr unbeständig.','Rain at times, becoming very unsettled','Βροχή κατά περιόδους, πολύ ασταθής.'),('Häufiger Regen.','Rain at Frequent Intervals','Συχνή βροχή.'),('Regen, sehr unbeständig.','Very Unsettled, Rain','Βροχή, πολύ ασταθής.'),('Stürmisch, evtl. Besserung.','Stormy, possibly improving','Θυελλώδης, πιθανώς βελτίωση.'),('Stürmisch mit viel Regen.','Stormy, much rain','Καταιγίδα με πολλές βροχές.')]%}
+            {%set t_lang = [('Beständiges Schönwetter!','Settled Fine','Σταθερός καλός καιρός!'),('Schönes Wetter!','Fine','Ωραίος καιρός!'),('Es wird schöner.','Becoming Fine','Θα καλυτερεύσει.'),('Schön, wird wechselhaft.','Fine, Becoming Less Settled','Μεταβλητός.'),('Schön, Regenschauer möglich.','Fine, Possibly showers','Πιθανή βροχή.'),('Heiter bis wolkig, Besserung zu erwarten.','Fairly Fine, Improving','Αίθριος έως νεφελώδης, αναμένεται βελτίωση.'),('Heiter bis wolkig, anfangs evtl. Schauer.','Fairly Fine, Possibly Showers, Early','Αίθριος έως συννεφιασμένος, πιθανώς βροχές στην αρχή.'),('Heiter bis wolkig, später Regen.','Fairly Fine, Showery Later','Αίθριος έως συννεφιασμένος, αργότερα βροχή.'),('Anfangs noch Schauer, dann Besserung.','Showery Early, Improving','Βροχόπτωση στην αρχή και μετά βελτίωση.'),('Wechselhaft mit Schauern','Changeable, Mending','Εναλλαγή με βροχόπτωση.'),('Heiter bis wolkig, vereinzelt Regen.','Fairly Fine , Showers Likely','Αίθριος έως συννεφιασμένος, κατά διαστήματα βροχή.'),('Unbeständig, später Aufklarung.','Rather Unsettled, Clearing Later','Ασταθής, αργότερα καθάρος.'),('Unbeständig, evtl. Besserung.','Unsettled, Probably Improving','Ασταθής, πιθανώς βελτίωση.'),('Regnerisch mit heiteren Phasen.','Showery, Bright Intervals','Καθαρός με διαστήματα βροχής.'),('Regnerisch, wird unbeständiger.','Showery, Becoming More Unsettled','Βροχερό, όλο και πιο ασταθές.'),('Wechselhaft mit etwas Regen.','Changeable, Some Rain','Αλλάζει με λίγη βροχή.'),('Unbeständig mit heiteren Phasen.','Unsettled, Short Fine Intervals','Άστατα, μικρά καθαρά διαστήματα'),('Unbeständig, später Regen.','Unsettled, Rain Later','Άστατη, αργότερα βροχή.'),('Unbeständig mit etwas Regen.','Unsettled, Rain At Times','Άστατος με λίγη βροχή.'),('Wechselhaft und regnerisch','Very Unsettled, Finer At Times','Μεταβλητός και βροχερός.'),('Gelegentlich Regen, Verschlechterung.','Rain At Times, Worse Later','Περιστασιακές βροχές, επιδείνωση.'),('Zuweilen Regen, sehr unbeständig.','Rain At Times, Becoming Very Unsettled','Βροχή κατά περιόδους, πολύ ασταθής.'),('Häufiger Regen.','Rain At Frequent Intervals','Συχνή βροχή.'),('Regen, sehr unbeständig.','Very Unsettled, Rain','Βροχή, πολύ ασταθής.'),('Stürmisch, evtl. Besserung.','Stormy, Possibly Improving','Θυελλώδης, πιθανώς βελτίωση.'),('Stürmisch mit viel Regen.','Stormy, Much Rain','Καταιγίδα με πολλές βροχές.')]%}
             {%if z==0 %}{%set type = "none"%}
             {%elif z in [1,10,20] %}{%set type = 0%}
             {%elif z in [2,11,21] %}{%set type = 1%}
@@ -176,7 +176,7 @@ template:
 
           forecast_neg_zam: >
             {##}
-            {# Negretti and Zambras 'slide rule' algorythm #}
+            {# Negretti and Zambras 'slide rule' algorithm #}
             {##}
             {# local vars #}
             {%set hem = 1%} {#Northern = 1 Southern = 0#}
@@ -186,10 +186,10 @@ template:
             {%set steady_opt = [25,25,25,25,25,25,23,23,22,18,15,13,10,4,1,1,0,0,0,0,0,0]%}
             {%set fall_opt = [25,25,25,25,25,25,25,25,23,23,21,20,17,14,7,3,1,1,1,0,0,0]%}
             {%set p0 = states.sensor.local_forecast.attributes.p0|float(0)%}
-            {%set p0change = states.sensor.local_forecast_pressurechange.state |float(0)%}
+            {%set p0change = states.sensor.local_forecast_pressurechange.state|float(0)%}
             {%set dir = states.sensor.local_forecast.attributes.wind_direction[1]|int(0) %}
             {%set windfak_speed = states.sensor.local_forecast.attributes.wind_direction[3]|int(0)%}
-            {%set t_lang = [('Beständiges Schönwetter!','Settled Fine','Σταθερός καλός καιρός!'),('Schönes Wetter!','fine','Ωραίος καιρός!'),('Es wird schöner.','Becoming Fine','Θα καλυτερεύσει.'),('Schön, wird wechselhaft.','Fine Becoming Less Settled','Μεταβλητός.'),('Schön, Regenschauer möglich.','Fine, Possibly showers','Πιθανή βροχή.'),('Heiter bis wolkig, Besserung zu erwarten.','Fairly Fine, Improving','Αίθριος έως νεφελώδης, αναμένεται βελτίωση.'),('Heiter bis wolkig, anfangs evtl. Schauer.','Fairly Fine, Possibly showers, early','Αίθριος έως συννεφιασμένος, πιθανώς βροχές στην αρχή.'),('Heiter bis wolkig, später Regen.','Fairly Fine Showery Later','Αίθριος έως συννεφιασμένος, αργότερα βροχή.'),('Anfangs noch Schauer, dann Besserung.','Showery Early, Improving','Βροχόπτωση στην αρχή και μετά βελτίωση.'),('Wechselhaft mit Schauern','Changeable Mending','Εναλλαγή με βροχόπτωση.'),('Heiter bis wolkig, vereinzelt Regen.','Fairly Fine , Showers likely','Αίθριος έως συννεφιασμένος, κατά διαστήματα βροχή.'),('Unbeständig, später Aufklarung.','Rather Unsettled Clearing Later','Ασταθής, αργότερα καθάρος.'),('Unbeständig, evtl. Besserung.','Unsettled, Probably Improving','Ασταθής, πιθανώς βελτίωση.'),('Regnerisch mit heiteren Phasen.','Showery Bright Intervals','Καθαρός με διαστήματα βροχής.'),('Regnerisch, wird unbeständiger.','Showery Becoming more unsettled','Βροχερό, όλο και πιο ασταθές.'),('Wechselhaft mit etwas Regen.','Changeable some rain','Αλλάζει με λίγη βροχή.'),('Unbeständig mit heiteren Phasen.','Unsettled, short fine Intervals','Άστατα, μικρά καθαρά διαστήματα'),('Unbeständig, später Regen.','Unsettled, Rain later','Άστατη, αργότερα βροχή.'),('Unbeständig mit etwas Regen.','Unsettled, rain at times','Άστατος με λίγη βροχή.'),('Wechselhaft und regnerisch','Very Unsettled, Finer at times','Μεταβλητός και βροχερός.'),('Gelegentlich Regen, Verschlechterung.','Rain at times, worse later','Περιστασιακές βροχές, επιδείνωση.'),('Zuweilen Regen, sehr unbeständig.','Rain at times, becoming very unsettled','Βροχή κατά περιόδους, πολύ ασταθής.'),('Häufiger Regen.','Rain at Frequent Intervals','Συχνή βροχή.'),('Regen, sehr unbeständig.','Very Unsettled, Rain','Βροχή, πολύ ασταθής.'),('Stürmisch, evtl. Besserung.','Stormy, possibly improving','Θυελλώδης, πιθανώς βελτίωση.'),('Stürmisch mit viel Regen.','Stormy, much rain','Καταιγίδα με πολλές βροχές.')]%}
+            {%set t_lang = [('Beständiges Schönwetter!','Settled Fine','Σταθερός καλός καιρός!'),('Schönes Wetter!','Fine','Ωραίος καιρός!'),('Es wird schöner.','Becoming Fine','Θα καλυτερεύσει.'),('Schön, wird wechselhaft.','Fine, Becoming Less Settled','Μεταβλητός.'),('Schön, Regenschauer möglich.','Fine, Possibly showers','Πιθανή βροχή.'),('Heiter bis wolkig, Besserung zu erwarten.','Fairly Fine, Improving','Αίθριος έως νεφελώδης, αναμένεται βελτίωση.'),('Heiter bis wolkig, anfangs evtl. Schauer.','Fairly Fine, Possibly Showers, Early','Αίθριος έως συννεφιασμένος, πιθανώς βροχές στην αρχή.'),('Heiter bis wolkig, später Regen.','Fairly Fine, Showery Later','Αίθριος έως συννεφιασμένος, αργότερα βροχή.'),('Anfangs noch Schauer, dann Besserung.','Showery Early, Improving','Βροχόπτωση στην αρχή και μετά βελτίωση.'),('Wechselhaft mit Schauern','Changeable, Mending','Εναλλαγή με βροχόπτωση.'),('Heiter bis wolkig, vereinzelt Regen.','Fairly Fine , Showers Likely','Αίθριος έως συννεφιασμένος, κατά διαστήματα βροχή.'),('Unbeständig, später Aufklarung.','Rather Unsettled, Clearing Later','Ασταθής, αργότερα καθάρος.'),('Unbeständig, evtl. Besserung.','Unsettled, Probably Improving','Ασταθής, πιθανώς βελτίωση.'),('Regnerisch mit heiteren Phasen.','Showery, Bright Intervals','Καθαρός με διαστήματα βροχής.'),('Regnerisch, wird unbeständiger.','Showery, Becoming More Unsettled','Βροχερό, όλο και πιο ασταθές.'),('Wechselhaft mit etwas Regen.','Changeable, Some Rain','Αλλάζει με λίγη βροχή.'),('Unbeständig mit heiteren Phasen.','Unsettled, Short Fine Intervals','Άστατα, μικρά καθαρά διαστήματα'),('Unbeständig, später Regen.','Unsettled, Rain Later','Άστατη, αργότερα βροχή.'),('Unbeständig mit etwas Regen.','Unsettled, Rain At Times','Άστατος με λίγη βροχή.'),('Wechselhaft und regnerisch','Very Unsettled, Finer At Times','Μεταβλητός και βροχερός.'),('Gelegentlich Regen, Verschlechterung.','Rain At Times, Worse Later','Περιστασιακές βροχές, επιδείνωση.'),('Zuweilen Regen, sehr unbeständig.','Rain At Times, Becoming Very Unsettled','Βροχή κατά περιόδους, πολύ ασταθής.'),('Häufiger Regen.','Rain At Frequent Intervals','Συχνή βροχή.'),('Regen, sehr unbeständig.','Very Unsettled, Rain','Βροχή, πολύ ασταθής.'),('Stürmisch, evtl. Besserung.','Stormy, Possibly Improving','Θυελλώδης, πιθανώς βελτίωση.'),('Stürmisch mit viel Regen.','Stormy, Much Rain','Καταιγίδα με πολλές βροχές.')]%}
             {%set t_lang_exceptional = ['außergewöhnliches Wetter, ','Exceptional Weather, ']%}
             {%set language = states.sensor.local_forecast.attributes.language|int(0)%}
             {##}
@@ -224,7 +224,7 @@ template:
                 {%elif trend|int == -1%}{%set z_hp = z_hp-7/100*bar_range%}
                 {%endif%}
               {%endif%}
-              {# for southern hemisphere all directions inverted #}
+              {# for southern hemisphere all directions are inverted #}
             {%endif%}
             {%if z_hp|float == bar_top|float%}
               {%set z_hp = bar_top-1 %}
@@ -285,28 +285,28 @@ template:
             {{z_out,z_num,type_l}}
 
           forecast_pressure_trend: >
-            {%set p0change = states.sensor.local_forecast_pressurechange.state |float(0)%}
+            {%set p0change = states.sensor.local_forecast_pressurechange.state|float(0)%}
             {%set language = states.sensor.local_forecast.attributes.language|int(0)%}
             {%set p0 = states.sensor.local_forecast.attributes.p0|float(0)%}
-            {%set trend_lang=[('fallend','falling','πέφτοντας'),('steigend','rising','αυξανόμενη'),('stabil','steady','σταθερή')]%}
+            {%set trend_lang=[('fallend','Falling','πέφτοντας'),('steigend','Rising','αυξανόμενη'),('stabil','Steady','σταθερή')]%}
             {%if p0change<=(-1.6) %}{%set trend = '0'%}{%elif p0change>=(1.6) %}{%set trend = '1'%}{%else%}{%set trend = '2'%}{%endif%}
             {{[trend_lang[trend|int][language],trend]}}
 
           forecast_temp_short: >
-            {#ultra short term temperature prognosis#}
+            {# ultra short term temperature prognosis #}
             {% set temp = states.sensor.local_forecast.attributes.temperature|float(0)%}
             {%set temp_change = states.sensor.local_forecast_temperaturechange.state|float(0)%}
             {%set first_time = states.sensor.local_forecast_zambretti_detail.attributes.first_time[1]|float(0)%}
             {%set second_time = states.sensor.local_forecast_zambretti_detail.attributes.second_time[1]|float(0)%}
-            {%if first_time>0%}{%set t_forecast = ((temp_change/60*first_time)+temp)|round(1)%}{%set intervall = 0%}
-            {%elif second_time>0%}{%set t_forecast = ((temp_change/60*second_time)+temp)|round(1)%}{%set intervall = 1%}
-            {%else%}{%set t_forecast = "unavailable"%}{%set intervall = -1%}{%endif%}
-            {{[t_forecast,intervall]}}
+            {%if first_time>0%}{%set t_forecast = ((temp_change/60*first_time)+temp)|round(1)%}{%set interval = 0%}
+            {%elif second_time>0%}{%set t_forecast = ((temp_change/60*second_time)+temp)|round(1)%}{%set interval = 1%}
+            {%else%}{%set t_forecast = "unavailable"%}{%set interval = -1%}{%endif%}
+            {{[t_forecast,interval]}}
 
   - sensor:
       - name: Local forecast zambretti detail
         state: >
-          {{"more details on zambretti forecast",states.sensor.local_forecast.attributes.forecast_zambretti[1]|int(0)+1}}
+          {{"More details on zambretti forecast",states.sensor.local_forecast.attributes.forecast_zambretti[1]|int(0)+1}}
         attributes:
           forecast: >
             {% set z = states.sensor.local_forecast.attributes.forecast_zambretti[1]|int(0)+1%}
@@ -362,7 +362,7 @@ template:
             {%set later = conditions[forecast[1]|int(0)][daynight|int(0)]%}
             {{(now,later)}}
           first_time: >
-            {# figure out if forecast is olf if yes add 6h -> next intervall #}
+            {# figure out if forecast is old; if yes add 6h -> next interval #}
             {%set halftime = 6*60-(as_timestamp(now()) - as_timestamp(states.sensor.local_forecast_zambretti_detail.last_changed))/60%}
             {%if halftime<0%}{%set correction = 6+((halftime/60)|float(0))%}{%else%}{%set correction = 0%}{%endif%}
 
@@ -370,7 +370,7 @@ template:
             {%set time_to = time_offset_first*60-(as_timestamp(now()) - as_timestamp(states.sensor.local_forecast_zambretti_detail.last_changed))/60%}
             {{[(as_timestamp(now())+time_to*60)| timestamp_custom('%H:%M'), time_to|round(2)]}}{# [time of first state, minutes to first state] #}
           second_time: >
-            {# figure out if forecast is olf if yes add 6h -> next intervall #}
+            {# figure out if forecast is old; if yes add 6h -> next interval #}
             {%set halftime = 6*60-(as_timestamp(now()) - as_timestamp(states.sensor.local_forecast_zambretti_detail.last_changed))/60%}
             {%if halftime<0%}{%set correction = 6+((halftime/60)|float(0))%}{%else%}{%set correction = 0%}{%endif%}
 
@@ -380,11 +380,11 @@ template:
 
       - name: Local forecast neg_zam detail
         state: >
-          {{"more details on neg_zam forecast", states.sensor.local_forecast.attributes.forecast_neg_zam[1]|int(0)+1}}
+          {{"More details on neg_zam forecast", states.sensor.local_forecast.attributes.forecast_neg_zam[1]|int(0)+1}}
         attributes:
           forecast: >
             {% set z = states.sensor.local_forecast.attributes.forecast_neg_zam[1]|int(0)+1%}
-            {# translate zambretti number to forecast icons: [next 6 h, next 12 h]#}
+            {# translate zambretti number to forecast icons: [next 6 h, next 12 h] #}
             {%if z == 1%}{%set forecast = [0,0]%}
             {%elif z == 2%}{%set forecast = [1,1]%}
             {%elif z == 3%}{%set forecast = [2,1]%}
@@ -430,7 +430,7 @@ template:
             {%set later = conditions[forecast[1]|int(0)][daynight|int(0)]%}
             {{(now,later)}}
           first_time: >
-            {# figure out if forecast is olf if yes add 6h -> next intervall #}
+            {# figure out if forecast is old; if yes add 6h -> next interval #}
             {%set halftime = 6*60-(as_timestamp(now()) - as_timestamp(states.sensor.local_forecast_neg_zam_detail.last_changed))/60%}
             {%if halftime<0%}{%set correction = 6+((halftime/60)|float(0))%}{%else%}{%set correction = 0%}{%endif%}
 
@@ -438,7 +438,7 @@ template:
             {%set time_to = time_offset_first*60-(as_timestamp(now()) - as_timestamp(states.sensor.local_forecast_neg_zam_detail.last_changed))/60%}
             {{[(as_timestamp(now())+time_to*60)| timestamp_custom('%H:%M'), time_to|round(2)]}}{# [time of first state, minutes to first state] #}
           second_time: >
-            {# figure out if forecast is olf if yes add 6h -> next intervall #}
+            {# figure out if forecast is old; if yes add 6h -> next interval #}
             {%set halftime = 6*60-(as_timestamp(now()) - as_timestamp(states.sensor.local_forecast_neg_zam_detail.last_changed))/60%}
             {%if halftime<0%}{%set correction = 6+((halftime/60)|float(0))%}{%else%}{%set correction = 0%}{%endif%}
 
@@ -446,16 +446,23 @@ template:
             {%set time_to = time_offset_second*60-(as_timestamp(now()) - as_timestamp(states.sensor.local_forecast_neg_zam_detail.last_changed))/60%}
             {{[(as_timestamp(now())+time_to*60)| timestamp_custom('%H:%M'), time_to|round(2)]}}{# [time of first state, minutes to first state] #}
 
+  # (un)availibility has to be set to avoid Home Assistant attempting to do math with empty strings on startup
   - sensor:
       - name: Local forecast Pressure
-        unit_of_measurement: "hpa"
+        unit_of_measurement: "hPa"
+        device_class: 'atmospheric_pressure'
+        availability: "{{ states.sensor.local_forecast.attributes.p0 | is_number }}"
         state: >
           {{ states.sensor.local_forecast.attributes.p0|float(states.sensor.local_forecast_pressure.state) }}
       - name: Local forecast temperature
         unit_of_measurement: "°C"
+        device_class: 'temperature'
+        availability: "{{ states.sensor.local_forecast.attributes.temperature | is_number }}"
         state: >
           {{ states.sensor.local_forecast.attributes.temperature|float(states.sensor.local_forecast_temperature.state) }}
 
+# The sampling_size values should add up to slightly less than the amount of sensor updates in the max_age time to work around Home Assistant's statistics integration
+# e.g. a pressure sensor that updates every ~5 seconds in 180 minutes is 2160 updates, -12.5%, gives 1890 samples
 sensor:
   - platform: statistics
     name: Local forecast PressureChange
@@ -463,9 +470,11 @@ sensor:
     state_characteristic: change
     max_age:
       minutes: 180
+    sampling_size: 1890
   - platform: statistics
     name: Local forecast TemperatureChange
     entity_id: sensor.local_forecast_temperature
     state_characteristic: change
     max_age:
       minutes: 60
+    sampling_size: 140
