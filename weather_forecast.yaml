@@ -74,8 +74,8 @@ template:
           forecast_short_term: >
             {# Calc current condtions#}
             {%set language = states.sensor.local_forecast.attributes.language|int(0)%}
-            {%set conditions = [('stürmisch','stormy','θυελλώδης'),('regnerisch','rainy','Βροχερός'),('wechselhaft','mixed','Μεταβλητός'),('sonnig','sunny','Ηλιόλουστος'),('sehr trocken','extra dry','Πολύ ξηρός')]%}
-            {%set pressure_system = [('Tiefdruckgebiet','low pressure system','σύστημα χαμηλής πίεσης'),('Normal','normal','φυσιολογικός'),('Hochdruckgebiet','high pressure system','σύστημα υψηλής πίεσης')]%}
+            {%set conditions = [('stürmisch','stormy','θυελλώδης','Tempestoso'),('regnerisch','rainy','Βροχερός','Piovoso'),('wechselhaft','mixed','Μεταβλητός','Variabile'),('sonnig','sunny','Ηλιόλουστος','Soleggiato'),('sehr trocken','extra dry','Πολύ ξηρός','Molto Secco')]%}
+            {%set pressure_system = [('Tiefdruckgebiet','low pressure system','σύστημα χαμηλής πίεσης','Bassa Pressione'),('Normal','normal','φυσιολογικός','Normale'),('Hochdruckgebiet','high pressure system','σύστημα υψηλής πίεσης','Zona Alta Pressione')]%}
             {%set p0 = states.sensor.local_forecast.attributes.p0|float(0)%}
             {% if p0<980 %}
             {% set current_condtion = [conditions[0][language],pressure_system[0][language]]%}
