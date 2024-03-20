@@ -46,12 +46,12 @@ cards:
         multiline_secondary: true
   - type: custom:mushroom-template-card
     primary: >-
-      forecast:
+      Forecast:
       {{states.sensor.local_forecast.attributes.forecast_zambretti[0]}}
     secondary: >-
       Pressure:
-      {{states.sensor.local_forecast.attributes.forecast_pressure_trend[0]}}  
-      {{states.sensor.local_forecast_pressurechange.state}} hpa in 3h
+      {{states.sensor.local_forecast.attributes.forecast_pressure_trend[0]}},
+      {{states.sensor.local_forecast_pressurechange.state}} hPa in 3h
     icon: mdi:weather-cloudy-arrow-right
     multiline_secondary: true
     icon_color: grey
